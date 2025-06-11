@@ -1,8 +1,9 @@
 // temp-server.js (you can delete after test)
 import { app } from "./app.js";
+import logger from "./utils/logger.js";
 
 const PORT = process.env.PORT || 8000;
 
 app.listen(PORT, () => {
-  console.log(`✅ Test server running on http://localhost:${PORT}`);
+  logger.info(`server is running on port ${PORT}`);
 });

@@ -1,4 +1,4 @@
 const predictMentalHealth=()=>{
-  console.log("goat")
+  console.log("predecting mental health")
 }
 export { predictMentalHealth };

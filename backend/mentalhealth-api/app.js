@@ -11,7 +11,7 @@ const app = express();
 dotenv.config();
 
 
-app.use(helmet());
+
 
 const allowedOrigin = process.env.CORS_ORIGIN || "http://127.0.0.1:5500";
 
