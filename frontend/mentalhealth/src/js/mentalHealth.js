@@ -4,6 +4,10 @@ const questionContainer = document.getElementById("questionContainer");
 const questionText = document.getElementById("questionText");
 const sectionHeading = document.getElementById("sectionHeading");
 const nextBtn = document.getElementById("nextBtn");
+const optionsContainer = document.getElementById("optionsContainer");
+const errorMsg = document.getElementById("errorMsg");
+const successMessage = document.getElementById("successMessage");
+const errorMessage = document.getElementById("errorMessage");
 
 let questions = [];
 let currentIndex = 0;
@@ -30,9 +34,7 @@ form.addEventListener("submit", (e) => {
 function getData() {
   fetch("http://localhost:5000/api/mentalhealth/question")
     .then((response) => {
-      if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}`);
-      }
+      if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
       return response.json();
     })
     .then((data) => {
@@ -46,7 +48,6 @@ function getData() {
 function displayQuestions(data) {
   container.classList.add("hidden");
   questionContainer.classList.remove("hidden");
-
   questions = extractAllQuestions(data.data);
   startTime = Date.now();
   showQuestion();
@@ -58,7 +59,22 @@ function extractAllQuestions(data) {
     ["subjective", "objective"].forEach((type) => {
       if (Array.isArray(data[section][type])) {
         data[section][type].forEach((q) => {
-          all.push({ ...q, section, type });
+          const newQ = {
+            ...q,
+            section,
+            type,
+          };
+
+          if (type === "objective") {
+            // Convert options object to array of { key, text, score }
+            newQ.options = Object.entries(q.options || {}).map(([key, val]) => ({
+              key,
+              text: val.text,
+              score: val.score
+            }));
+          }
+
+          all.push(newQ);
         });
       }
     });
@@ -70,44 +86,57 @@ function showQuestion() {
   const q = questions[currentIndex];
   questionText.textContent = q.question;
   sectionHeading.textContent = `${q.section} - ${q.type}`;
-
-  const optionsContainer = document.getElementById("optionsContainer");
   optionsContainer.innerHTML = "";
+  errorMsg.classList.add("hidden");
 
-  if (q.options && q.options.length > 0) {
+  if (q.type === "objective" && q.options?.length > 0) {
     q.options.forEach((opt, index) => {
       const optionId = `option_${index}`;
-      const radioHTML = `
+      optionsContainer.innerHTML += `
         <div>
-          <input type="radio" name="questionOption" id="${optionId}" value="${opt}" class="mr-2">
-          <label for="${optionId}" class="text-white">${opt}</label>
-        </div>`;
-      optionsContainer.innerHTML += radioHTML;
+          <input type="radio" name="questionOption" id="${optionId}" value="${opt.text}" class="mr-2">
+          <label for="${optionId}" class="text-black">${opt.key}) ${opt.text}</label>
+        </div>
+      `;
     });
   } else {
-    optionsContainer.innerHTML = "<p class='text-gray-400 italic'>No options available for this question.</p>";
+    optionsContainer.innerHTML = `
+      <textarea id="subjectiveAnswer" rows="3" class="w-full p-2 rounded  text-black rounded-md p-4" placeholder="Type your answer here..."></textarea>
+    `;
   }
 
-  document.getElementById("errorMsg").classList.add("hidden");
   startTime = Date.now();
 }
 
 nextBtn.addEventListener("click", () => {
+  const q = questions[currentIndex];
   const endTime = Date.now();
   const timeTaken = Math.floor((endTime - startTime) / 1000);
+  let selectedAnswer = null;
 
-  const selectedOption = document.querySelector("input[name='questionOption']:checked");
-
-  if (!selectedOption && questions[currentIndex].options?.length > 0) {
-    document.getElementById("errorMsg").classList.remove("hidden");
-    return;
+  if (q.type === "objective") {
+    const selected = document.querySelector("input[name='questionOption']:checked");
+    if (!selected) {
+      errorMsg.textContent = "Please select an option before proceeding.";
+      errorMsg.classList.remove("hidden");
+      return;
+    }
+    selectedAnswer = selected.value;
+  } else {
+    const textarea = document.getElementById("subjectiveAnswer");
+    if (!textarea || textarea.value.trim() === "") {
+      errorMsg.textContent = "Please type your answer before proceeding.";
+      errorMsg.classList.remove("hidden");
+      return;
+    }
+    selectedAnswer = textarea.value.trim();
   }
 
   userInfo.responses.push({
-    question: questions[currentIndex].question,
-    section: questions[currentIndex].section,
-    type: questions[currentIndex].type,
-    selectedAnswer: selectedOption ? selectedOption.value : null,
+    question: q.question,
+    section: q.section,
+    type: q.type,
+    selectedAnswer,
     timeTaken
   });
 
@@ -126,9 +155,7 @@ function sendData(data) {
 
   fetch("https://example.org/post", {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
     signal: controller.signal,
   })
@@ -141,7 +168,7 @@ function sendData(data) {
       }
       return response.json();
     })
-    .then((result) => {
+    .then(() => {
       successMessage.textContent = "Data submitted successfully!";
       form.reset();
     })

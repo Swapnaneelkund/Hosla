@@ -9,7 +9,7 @@ import question from "./routes/questionRoutes.js"
 import mongodbConnect from "./config/Database-Connection.js";
 const app = express();
 dotenv.config();
-mongodbConnect();
+
 
 app.use(helmet());
 
@@ -19,7 +19,7 @@ app.use(
   cors({
     origin: allowedOrigin,
     credentials: true,
-    optionsSuccessStatus: 200, // some legacy browsers choke without this
+    optionsSuccessStatus: 200, 
   })
 );
 
@@ -30,11 +30,6 @@ app.use("/api/mentalhealth", predictRoutes);
 app.use("/api/mentalhealth/question",question);
 import { ApiError } from "./utils/ApiError.js";
 
-// Test route to trigger an error
-app.get("/test-error", (req, res, next) => {
-  // This simulates a 500 error
-  next(new ApiError(500, "This is a simulated server error"));
-});
 app.use(errorHandler);
 
 export { app };
