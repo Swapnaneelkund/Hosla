@@ -1,7 +1,7 @@
 const mentalAgeQuestionnaire = {
-  spiritualAnchoring: {
+  SpiritualAnchoring: {
     weight: "25%",
-    subjective: [
+    Subjective: [
       {
         id: "Q1",
         question: "What does 'letting go' mean to you at this stage of life?",
@@ -20,7 +20,7 @@ const mentalAgeQuestionnaire = {
         weight: 5
       }
     ],
-    objective: [
+    Objective: [
       {
         question: "Do you reflect on your actions daily (through prayer/journal)?",
         weight: 3,
@@ -43,9 +43,9 @@ const mentalAgeQuestionnaire = {
     ]
   },
 
-  communityInvolvement: {
+  CommunityInvolvement: {
     weight: "20%",
-    subjective: [
+    Subjective: [
       {
         id: "Q1",
         question: "What does 'being useful to others' mean to you now? Share a moment.",
@@ -57,7 +57,7 @@ const mentalAgeQuestionnaire = {
         weight: 10
       }
     ],
-    objective: [
+    Objective: [
       {
         question: "Do you talk to strangers (vendors, neighbors, children) with joy or curiosity?",
         weight: 5,
@@ -79,9 +79,9 @@ const mentalAgeQuestionnaire = {
     ]
   },
 
-  cognitiveFunction: {
+  CognitiveFunction: {
     weight: "15%",
-    subjective: [
+    Subjective: [
       {
         id: "Q1",
         question: "Describe your last week’s routine in order.",
@@ -95,7 +95,7 @@ const mentalAgeQuestionnaire = {
         criteria: ["emotional recall", "narrative detail"]
       }
     ],
-    objective: [
+    Objective: [
       {
         question: "Do you remember today’s date and day?",
         weight: 3,
@@ -116,9 +116,9 @@ const mentalAgeQuestionnaire = {
     ]
   },
 
-  emotionalFlexibility: {
+  EmotionalFlexibility: {
     weight: "15%",
-    subjective: [
+    Subjective: [
       {
         id: "Q1",
         question: "Describe a recent situation where your plan didn’t go as expected. How did you respond?",
@@ -132,7 +132,7 @@ const mentalAgeQuestionnaire = {
         criteria: ["openness", "self-reflection"]
       }
     ],
-    objective: [
+    Objective: [
       {
         question: "If someone younger corrects you, what’s your reaction?",
         weight: 5,
@@ -145,9 +145,9 @@ const mentalAgeQuestionnaire = {
     ]
   },
 
-  thematicAppreciation: {
+  ThematicAppreciation: {
     weight: "15%",
-    subjective: [
+    Subjective: [
       {
         id: "Q1",
         question: "A man walks alone on a village path at dusk holding a lantern. Write a 5-line story based on this image.",
@@ -161,7 +161,7 @@ const mentalAgeQuestionnaire = {
         criteria: ["metaphor understanding", "self-placement"]
       }
     ],
-    objective: [
+    Objective: [
       {
         question: "What does a banyan tree symbolize to you?",
         weight: 5,

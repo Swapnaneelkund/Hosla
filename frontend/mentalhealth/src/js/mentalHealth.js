@@ -32,7 +32,7 @@ form.addEventListener("submit", (e) => {
 });
 
 function getData() {
-  fetch("http://localhost:5000/api/mentalhealth/question")
+  fetch("http://localhost:8000/api/mentalhealth/question")
     .then((response) => {
       if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
       return response.json();
@@ -56,17 +56,16 @@ function displayQuestions(data) {
 function extractAllQuestions(data) {
   const all = [];
   for (const section in data) {
-    ["subjective", "objective"].forEach((type) => {
+    ["Subjective", "Objective"].forEach((type) => {
       if (Array.isArray(data[section][type])) {
         data[section][type].forEach((q) => {
           const newQ = {
             ...q,
             section,
-            type,
+            type: type.toLowerCase(), // normalize type
           };
 
-          if (type === "objective") {
-            // Convert options object to array of { key, text, score }
+          if (type.toLowerCase() === "objective") {
             newQ.options = Object.entries(q.options || {}).map(([key, val]) => ({
               key,
               text: val.text,
@@ -93,7 +92,7 @@ function showQuestion() {
     q.options.forEach((opt, index) => {
       const optionId = `option_${index}`;
       optionsContainer.innerHTML += `
-        <div>
+        <div class="flex items-center gap-2">
           <input type="radio" name="questionOption" id="${optionId}" value="${opt.text}" class="mr-2">
           <label for="${optionId}" class="text-black">${opt.key}) ${opt.text}</label>
         </div>
@@ -101,7 +100,7 @@ function showQuestion() {
     });
   } else {
     optionsContainer.innerHTML = `
-      <textarea id="subjectiveAnswer" rows="3" class="w-full p-2 rounded  text-black rounded-md p-4" placeholder="Type your answer here..."></textarea>
+      <textarea id="subjectiveAnswer" rows="3" class="w-full p-2 rounded text-black" placeholder="Type your answer here..."></textarea>
     `;
   }
 
@@ -150,7 +149,7 @@ nextBtn.addEventListener("click", () => {
 });
 
 function sendData(data) {
-  
+  console.log(data);
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 10000);
 
