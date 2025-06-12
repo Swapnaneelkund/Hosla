@@ -13,11 +13,22 @@ let questions = [];
 let currentIndex = 0;
 let startTime = null;
 
-const userInfo = {
+let userInfo = {
   createdAt: new Date().toISOString(),
   data: {},
   responses: []
 };
+
+// Restore saved data if page reloads
+window.addEventListener("DOMContentLoaded", () => {
+  const saved = localStorage.getItem("savedUserInfo");
+  const savedIndex = localStorage.getItem("savedIndex");
+  if (saved && savedIndex) {
+    userInfo = JSON.parse(saved);
+    currentIndex = parseInt(savedIndex, 10);
+    getData();
+  }
+});
 
 form.addEventListener("submit", (e) => {
   e.preventDefault();
@@ -28,20 +39,28 @@ form.addEventListener("submit", (e) => {
   userInfo.data.address = formData.get("address");
   userInfo.data.number = formData.get("number");
   userInfo.data.ageSlab = formData.get("ageSlab");
+
+  localStorage.setItem("savedUserInfo", JSON.stringify(userInfo));
+  localStorage.setItem("savedIndex", currentIndex.toString());
+
   getData();
 });
 
 function getData() {
   fetch("http://localhost:8000/api/mentalhealth/question")
     .then((response) => {
-      if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch questions: ${response.status} ${response.statusText}`);
+      }
       return response.json();
     })
     .then((data) => {
       displayQuestions(data);
     })
     .catch((err) => {
-      console.error(err.message);
+      console.error("Error fetching questions:", err.message);
+      errorMsg.textContent = "Unable to load questions. Please try again later.";
+      errorMsg.classList.remove("hidden");
     });
 }
 
@@ -62,9 +81,8 @@ function extractAllQuestions(data) {
           const newQ = {
             ...q,
             section,
-            type: type.toLowerCase(), // normalize type
+            type: type.toLowerCase(),
           };
-
           if (type.toLowerCase() === "objective") {
             newQ.options = Object.entries(q.options || {}).map(([key, val]) => ({
               key,
@@ -72,7 +90,6 @@ function extractAllQuestions(data) {
               score: val.score
             }));
           }
-
           all.push(newQ);
         });
       }
@@ -83,6 +100,8 @@ function extractAllQuestions(data) {
 
 function showQuestion() {
   const q = questions[currentIndex];
+  if (!q) return;
+
   questionText.textContent = q.question;
   sectionHeading.textContent = `${q.section} - ${q.type}`;
   optionsContainer.innerHTML = "";
@@ -105,6 +124,7 @@ function showQuestion() {
   }
 
   startTime = Date.now();
+  localStorage.setItem("savedIndex", currentIndex.toString());
 }
 
 nextBtn.addEventListener("click", () => {
@@ -143,13 +163,16 @@ nextBtn.addEventListener("click", () => {
   if (currentIndex < questions.length) {
     showQuestion();
   } else {
+    localStorage.removeItem("savedUserInfo");
+    localStorage.removeItem("savedIndex");
+
     questionContainer.innerHTML = "<p class='text-lg font-semibold text-green-700'>Thank you! Submitting your answers...</p>";
     sendData(userInfo);
   }
 });
 
 function sendData(data) {
-  console.log(data);
+  console.log("Submitting data:", data);
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 10000);
 
@@ -162,8 +185,8 @@ function sendData(data) {
     .then((response) => {
       clearTimeout(timeoutId);
       if (!response.ok) {
-        return response.text().then((serverMessage) => {
-          throw new Error(serverMessage || `HTTP ${response.status}`);
+        return response.text().then((msg) => {
+          throw new Error(msg || `HTTP ${response.status}`);
         });
       }
       return response.json();
@@ -174,11 +197,12 @@ function sendData(data) {
     })
     .catch((err) => {
       clearTimeout(timeoutId);
-      console.error("error:", err.message);
-      if (err.name === "AbortError") {
-        errorMessage.textContent = "Request timed out. Please try again.";
-      } else {
-        errorMessage.textContent = err.message || "Something went wrong.";
-      }
+      console.error("Submit error:", err.message);
+      errorMessage.textContent = err.name === "AbortError"
+        ? "Request timed out. Please try again."
+        : err.message || "Something went wrong.";
     });
 }
+
+// Optional: Debug storage clear
+// localStorage.clear();
