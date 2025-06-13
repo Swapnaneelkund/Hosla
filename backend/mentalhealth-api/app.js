@@ -9,11 +9,14 @@ import question from "./routes/questionRoutes.js"
 import mongodbConnect from "./config/Database-Connection.js";
 const app = express();
 dotenv.config();
+// Only connect to MongoDB if a URI is provided
+if (process.env.mongodbURI) {
+  mongodbConnect();
+} else {
+  logger.warn("No MongoDB URI found in .env. Skipping database connection.");
+}
 
-
-
-
-const allowedOrigin = process.env.CORS_ORIGIN || "http://127.0.0.1:5500";
+const allowedOrigin = process.env.CORS_ORIGIN || "http://localhost:8080";
 
 app.use(
   cors({
