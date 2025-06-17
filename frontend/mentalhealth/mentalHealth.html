@@ -1,153 +1,170 @@
 <!DOCTYPE html>
 <html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mental Health Prediction</title>
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+      rel="stylesheet"
+    />
+    <link href="./src/css/mentalhealth.css" rel="stylesheet" />
+    <link rel="icon" href="data:," />
+    <style>
+      .next-animated-btn .next-arrow {
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      }
 
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Mental Health Prediction</title>
-  <link href="./src/css/output.css" rel="stylesheet" />
-  <link rel="icon" href="data:,">
-  <style>
-    .next-animated-btn .next-arrow {
-      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    }
+      .next-animated-btn:hover .next-arrow {
+        transform: translateX(8px) scale(1.15);
+      }
+    </style>
+  </head>
 
-    .next-animated-btn:hover .next-arrow {
-      transform: translateX(8px) scale(1.15);
-    }
-  </style>
-</head>
-
-<body class="bg-gray-900 h-screen flex items-center justify-center w-full">
-  <div id="container" class="w-full max-w-md bg-white p-6 rounded-lg shadow-md h-full max-h-screen overflow-y-auto"
-    aria-label="Main form container">
-
-    <!-- Header with Logo and Title -->
-    <div class="flex flex-col items-center mb-6">
-      <img src="./assets/logo.png" alt="Hosla Logo" class="h-16 w-16 mb-2" style="padding-right: 2rem;" />
-      <h2 class="text-2xl font-bold text-center text-gray-800" aria-label="Form title">Mental Health Prediction</h2>
+  <body>
+    <!-- Floating Shapes -->
+    <div class="floating-shapes">
+      <div class="shape"></div>
+      <div class="shape"></div>
+      <div class="shape"></div>
     </div>
-
-    <!-- User Form -->
-    <div id="form-container" aria-label="User input form">
-      <form id="userForm" class="space-y-4" aria-label="User details form">
-
-        <!-- Name -->
-        <div>
-          <label for="name" class="block text-sm font-medium text-gray-700">Name</label>
-          <input type="text" name="name" id="name" placeholder="Enter your name"
-            class="w-full mt-1 border border-gray-300 rounded-md px-3 py-2" aria-label="Enter your name" required />
-        </div>
-
-        <!-- Email -->
-        <div>
-          <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
-          <input type="email" name="email" id="email" placeholder="Enter your email"
-            class="w-full mt-1 border border-gray-300 rounded-md px-3 py-2" aria-label="Enter your email address"
-            required />
-        </div>
-
-        <!-- Gender -->
-        <div>
-          <label class="block text-sm font-medium text-gray-700">Gender</label>
-          <div class="flex space-x-4 mt-1" role="radiogroup" aria-label="Select gender">
-            <label class="flex items-center">
-              <input type="radio" name="gender" value="male" class="text-blue-600" aria-label="Male" required />
-              <span class="ml-2 text-gray-700">Male</span>
-            </label>
-            <label class="flex items-center">
-              <input type="radio" name="gender" value="female" class="text-blue-600" aria-label="Female" />
-              <span class="ml-2 text-gray-700">Female</span>
-            </label>
+    <div class="main-container">
+      <div class="form-card" id="container">
+        <!-- Header -->
+        <div class="header">
+          <div class="logo">
+            <img
+              src="./assets/logo.png"
+              alt="Hosla Logo"
+              style="height: 60px; width: auto"
+            />
           </div>
+          <h1 class="main-title">Mental Health Prediction</h1>
+          <p class="subtitle">Comprehensive assessment for seniors(50+)</p>
         </div>
-
-        <!-- Address -->
-        <div>
-          <label for="address" class="block text-sm font-medium text-gray-700">Address</label>
-          <input type="text" name="address" id="address" placeholder="Enter your address"
-            class="w-full mt-1 border border-gray-300 rounded-md px-3 py-2" aria-label="Enter your address" required />
-        </div>
-
-        <!-- Phone Number -->
-        <div>
-          <label for="number" class="block text-sm font-medium text-gray-700">Phone Number</label>
-          <input type="number" name="number" id="number" placeholder="Enter your phone number"
-            class="w-full mt-1 border border-gray-300 rounded-md px-3 py-2" aria-label="Enter your phone number"
-            required />
-        </div>
-
-        <!-- Age Slab -->
-        <div>
-          <label for="ageSlab" class="block text-sm font-medium text-gray-700">Age Slab</label>
-          <select name="ageSlab" id="ageSlab" class="w-full mt-1 border border-gray-300 rounded-md px-3 py-2"
-            aria-label="Select your age range" required>
-            <option value="">Select age slab</option>
-            <option value="50-59">50–59</option>
-            <option value="60-69">60–69</option>
-            <option value="70-79">70–79</option>
-            <option value="80-89">80–89</option>
-            <option value="90-99">90–99</option>
+        <!-- Language Selector -->
+        <div class="language-selector">
+          <label for="languageSelect"
+            ><i class="fas fa-globe"></i>Language:</label
+          ><select id="languageSelect">
+            <option value="en">English</option>
+            <option value="hi">हिन्दी</option>
+            <option value="bn">বাংলা</option>
           </select>
         </div>
-
-        <!-- Submit Button -->
-        <div class="text-center pt-4">
-          <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-md"
-            aria-label="Submit form">
-            Submit
+        <!-- User Form -->
+        <div id="form-container">
+          <form id="userForm">
+            <div class="form-group">
+              <label for="name" class="form-label">Full Name</label
+              ><input
+                type="text"
+                name="name"
+                id="name"
+                class="form-input"
+                placeholder="Enter your full name"
+                required
+              />
+            </div>
+            <div class="form-group">
+              <label for="email" class="form-label">Email Address</label
+              ><input
+                type="email"
+                name="email"
+                id="email"
+                class="form-input"
+                placeholder="Enter your email address"
+                required
+              />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Gender</label>
+              <div class="radio-group">
+                <label class="radio-option"
+                  ><input
+                    type="radio"
+                    name="gender"
+                    value="male"
+                    required
+                  /><span>Male</span></label
+                ><label class="radio-option"
+                  ><input type="radio" name="gender" value="female" /><span
+                    >Female</span
+                  ></label
+                >
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="address" class="form-label">Address</label
+              ><input
+                type="text"
+                name="address"
+                id="address"
+                class="form-input"
+                placeholder="Enter your address"
+                required
+              />
+            </div>
+            <div class="form-group">
+              <label for="number" class="form-label">Phone Number</label
+              ><input
+                type="tel"
+                name="number"
+                id="number"
+                class="form-input"
+                placeholder="Enter your phone number"
+                required
+              />
+            </div>
+            <div class="form-group">
+              <label for="ageSlab" class="form-label">Age Range</label
+              ><select name="ageSlab" id="ageSlab" class="form-input" required>
+                <option value="">Select age range</option>
+                <option value="50-59">50–59</option>
+                <option value="60-69">60–69</option>
+                <option value="70-79">70–79</option>
+                <option value="80-89">80–89</option>
+                <option value="90-99">90–99</option>
+              </select>
+            </div>
+            <button type="submit" class="submit-btn">
+              Start Assessment<i class="fas fa-arrow-right"></i>
+            </button>
+          </form>
+        </div>
+        <!-- Question Container -->
+        <div id="questionContainer" class="question-container hidden">
+          <!-- Progress Bar -->
+          <div class="progress-bar">
+            <div
+              class="progress-fill"
+              id="progressFill"
+              style="width: 0%"
+            ></div>
+          </div>
+          <div
+            id="progressText"
+            style="
+              text-align: center;
+              margin-bottom: 20px;
+              font-weight: 600;
+              color: #667eea;
+            "
+          ></div>
+          <h2 id="sectionHeading" class="section-heading"></h2>
+          <h3 id="questionTypeTitle" class="question-type"></h3>
+          <p id="questionText" class="question-text"></p>
+          <div id="optionsContainer" class="options-container"></div>
+          <p id="errorMsg" class="error-message hidden"></p>
+          <button id="nextBtn" class="next-btn">
+            Next<i class="fas fa-arrow-right"></i>
           </button>
         </div>
-      </form>
-    </div> <!-- End of form-container -->
-
-    <!-- Language Selector -->
-    <div class="flex justify-center mb-4" aria-label="Language selector">
-      <label for="languageSelect" class="mr-2 text-gray-700 font-medium">Language:</label>
-      <select id="languageSelect"
-        class="border border-gray-300 rounded-md px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500">
-        <option value="en">English</option>
-        <option value="hi">हिन्दी</option>
-        <option value="bn">বাংলা</option>
-      </select>
-    </div>
-
-    <!-- Question Container (Initially hidden) -->
-    <div id="questionContainer" class="hidden mt-6 gap-4 flex-col" aria-label="Question section">
-      <div id="progressBar" class="mb-2"></div>
-      <h2 id="sectionHeading" class="text-2xl font-bold text-indigo-700 mb-1 text-center" aria-label="Section heading">
-      </h2>
-      <h3 id="questionTypeTitle" class="text-xl font-medium text-gray-500 mb-1 text-center"
-        aria-label="Question type title"></h3>
-      <p id="questionText" class="text-base font-semibold text-gray-800 mb-4" aria-label="Question text"></p>
-
-      <div id="optionsContainer" class="space-y-2 mb-2" aria-label="Question options"></div>
-
-      <p id="errorMsg" class="text-red-600 text-sm mb-2 hidden" aria-live="assertive">Please select an option before
-        proceeding.</p>
-
-      <div class="flex items-center justify-center">
-        <button id="nextBtn"
-          class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-md shadow-lg transition-transform duration-150 mx-auto block absolute left-1/2 -translate-x-1/2 next-animated-btn"
-          style="display: flex; justify-content: center; align-items: center; min-width: 160px; max-width: 240px; padding: 0.5rem 2.5rem; font-size: 1.1rem; cursor: pointer; text-align: center; margin-top: 1rem; bottom: 2rem; cursor: pointer;"
-          aria-label="Next question">
-          <span class="inline-block align-middle">Next</span>
-          <svg class="inline-block ml-2 w-5 h-5 text-white next-arrow" fill="none" stroke="currentColor" stroke-width="2"
-            viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
-          </svg>
-        </button>
-
+        <!-- Messages -->
+        <div id="successMessage" class="success-message hidden"></div>
+        <div id="errorMessage" class="error-message hidden"></div>
       </div>
-
     </div>
-
-    <!-- Success/Error Messages -->
-    <div id="successMessage" class="hidden"></div>
-    <div id="errorMessage" class="hidden"></div>
-  </div>
-  </div>
-  <script src="./src/js/mentalHealth.js"></script>
-</body>
-
+    <script src="./src/js/mentalHealth.js"></script>
+  </body>
 </html>
