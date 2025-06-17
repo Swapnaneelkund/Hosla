@@ -242,21 +242,11 @@ function showQuestion(index) {
         </div>
       `;
     });
-    
   } else {
-    nextBtn.classList.add("hidden");
+    nextBtn.classList.remove("hidden"); // Always show the same button
     optionsContainer.innerHTML = `
       <textarea id="subjectiveAnswer" rows="6" class="elder-input w-full" placeholder="Type your answer here..."></textarea>
-      <div class="text-center mt-4">
-        <button id="nextBtnDynamic" type="button" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-md shadow-lg transition-transform duration-150">${t('next')}</button>
-      </div>
     `;
-    const nextBtnDynamic = document.getElementById("nextBtnDynamic");
-    if (nextBtnDynamic) {
-      nextBtnDynamic.addEventListener("click", () => {
-        nextBtn.click();
-      });
-    }
   }
   questionContainer.classList.remove("hidden");
   updateProgress(index);
