@@ -7,14 +7,26 @@
   <title>Mental Health Prediction</title>
   <link href="./src/css/output.css" rel="stylesheet" />
   <link rel="icon" href="data:,">
+  <style>
+    .next-animated-btn .next-arrow {
+      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .next-animated-btn:hover .next-arrow {
+      transform: translateX(8px) scale(1.15);
+    }
+  </style>
 </head>
 
 <body class="bg-gray-900 h-screen flex items-center justify-center w-full">
   <div id="container" class="w-full max-w-md bg-white p-6 rounded-lg shadow-md h-full max-h-screen overflow-y-auto"
     aria-label="Main form container">
 
-    <!-- Page Title -->
-    <h2 class="text-2xl font-bold text-center text-gray-800 mb-6" aria-label="Form title">Mental Health Prediction</h2>
+    <!-- Header with Logo and Title -->
+    <div class="flex flex-col items-center mb-6">
+      <img src="./assets/logo.png" alt="Hosla Logo" class="h-16 w-16 mb-2" style="padding-right: 2rem;" />
+      <h2 class="text-2xl font-bold text-center text-gray-800" aria-label="Form title">Mental Health Prediction</h2>
+    </div>
 
     <!-- User Form -->
     <div id="form-container" aria-label="User input form">
@@ -116,11 +128,11 @@
 
       <div class="flex items-center justify-center">
         <button id="nextBtn"
-          class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-md shadow-lg transition-transform duration-150 mx-auto block absolute left-1/2 -translate-x-1/2"
+          class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-md shadow-lg transition-transform duration-150 mx-auto block absolute left-1/2 -translate-x-1/2 next-animated-btn"
           style="display: flex; justify-content: center; align-items: center; min-width: 160px; max-width: 240px; padding: 0.5rem 2.5rem; font-size: 1.1rem; cursor: pointer; text-align: center; margin-top: 1rem; bottom: 2rem; cursor: pointer;"
           aria-label="Next question">
           <span class="inline-block align-middle">Next</span>
-          <svg class="inline-block ml-2 w-5 h-5 text-white" fill="none" stroke="currentColor" stroke-width="2"
+          <svg class="inline-block ml-2 w-5 h-5 text-white next-arrow" fill="none" stroke="currentColor" stroke-width="2"
             viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
           </svg>
