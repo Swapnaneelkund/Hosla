@@ -16,7 +16,7 @@ if (process.env.mongodbURI) {
   logger.warn("No MongoDB URI found in .env. Skipping database connection.");
 }
 
-const allowedOrigin = process.env.CORS_ORIGIN || "http://localhost:8080";
+const allowedOrigin = process.env.CORS_ORIGIN || "http://127.0.0.1:5500";
 
 app.use(
   cors({

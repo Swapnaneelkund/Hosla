@@ -157,7 +157,9 @@ function getData() {
     })
     .then((data) => {
       // Fix: Use data.data for questions
+      console.log(data.data);
       questions = extractAllQuestions(data.data);
+      console.log(questions);
       displayQuestions(questions, 0);
     })
     .catch((err) => {
@@ -212,6 +214,7 @@ function extractAllQuestions(data) {
 
 function showQuestion(index) {
   const q = questions[index];
+  console.log(typeof q);
   if (!q) {
     questionText.textContent = "Question not found.";
     optionsContainer.innerHTML = "";
@@ -239,6 +242,7 @@ function showQuestion(index) {
         </div>
       `;
     });
+    
   } else {
     nextBtn.classList.add("hidden");
     optionsContainer.innerHTML = `
@@ -254,6 +258,7 @@ function showQuestion(index) {
       });
     }
   }
+  questionContainer.classList.remove("hidden");
   updateProgress(index);
   startTime = Date.now();
   localStorage.setItem("savedIndex", currentIndex.toString());
