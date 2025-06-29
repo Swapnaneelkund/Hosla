@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mental Health Assessment Results</title>
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./src/css/mentalHealthResult.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  </head>
+  <body>
+    <!-- Floating Shapes -->
+    <div class="floating-shapes">
+      <div class="shape"></div>
+      <div class="shape"></div>
+      <div class="shape"></div>
+    </div>
+
+    <div class="main-container">
+      <!-- Results Header -->
+      <div class="results-card">
+        <div class="results-header">
+          <h1 class="results-title">Your Mental Health Assessment Results</h1>
+          <p
+            class="participant-name"
+            id="participantName"
+            style="
+              display: none;
+              font-size: 1.1em;
+              color: #374151;
+              margin: 4px 0 0 0;
+            "
+          ></p>
+          <p class="results-timestamp" id="timestamp"></p>
+        </div>
+
+        <!-- Score Overview -->
+        <div class="score-overview">
+          <div class="score-circle">
+            <canvas id="scoreChart" width="200" height="200"></canvas>
+            <div class="score-display">
+              <div class="score-number" id="scoreNumber">--</div>
+              <div class="score-label">Overall Score</div>
+            </div>
+          </div>
+          <div class="score-details">
+            <div class="risk-level" id="riskLevel">Loading...</div>
+            <p class="score-message" id="scoreMessage">
+              Loading your personalized assessment results...
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section Breakdown -->
+      <div class="results-card">
+        <div class="section-breakdown">
+          <h2 class="section-title">
+            <i class="fas fa-chart-bar"></i>
+            Section Breakdown
+          </h2>
+          <div class="section-grid" id="sectionGrid">
+            <!-- Section items will be populated here -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Detailed Chart -->
+      <div class="results-card">
+        <div class="chart-container">
+          <h3 class="chart-title">Detailed Section Analysis</h3>
+          <canvas id="detailedChart" width="400" height="200"></canvas>
+        </div>
+      </div>
+
+      <!-- Personalized Recommendations -->
+      <div class="results-card">
+        <div class="recommendations-section">
+          <h2 class="section-title">
+            <i class="fas fa-lightbulb"></i>
+            Personalized Recommendations
+          </h2>
+          <div class="recommendations-grid" id="recommendationsGrid">
+            <!-- Recommendations will be populated here -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Resources & Support -->
+      <div class="results-card">
+        <div class="resources-section">
+          <h2 class="section-title">
+            <i class="fas fa-hands-helping"></i>
+            Resources & Support
+          </h2>
+          <div id="resourcesList">
+            <!-- Resources will be populated here -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="results-card">
+        <div class="actions-section">
+          <button class="action-btn btn-primary" onclick="downloadPDF()">
+            <i class="fas fa-download"></i>
+            Download PDF Report
+          </button>
+          <button class="action-btn btn-secondary" onclick="emailResults()">
+            <i class="fas fa-envelope"></i>
+            Email Results
+          </button>
+          <button class="action-btn btn-tertiary" onclick="shareResults()">
+            <i class="fas fa-share-alt"></i>
+            Share with Provider
+          </button>
+          <button class="action-btn btn-primary" onclick="retakeAssessment()">
+            <i class="fas fa-redo"></i>
+            Retake Assessment
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Email Modal -->
+    <div id="emailModal" class="modal">
+      <div class="modal-content">
+        <span class="close" onclick="closeModal()">&times;</span>
+        <h3 style="margin-bottom: 20px; color: #374151">Email Your Results</h3>
+        <div style="margin-bottom: 20px">
+          <label
+            for="emailAddress"
+            style="
+              display: block;
+              margin-bottom: 8px;
+              font-weight: 600;
+              color: #374151;
+            "
+            >Email Address:</label
+          >
+          <input
+            type="email"
+            id="emailAddress"
+            placeholder="Enter email address"
+            style="
+              width: 100%;
+              padding: 12px;
+              border: 2px solid #e2e8f0;
+              border-radius: 8px;
+              font-size: 16px;
+            "
+          />
+        </div>
+        <div style="margin-bottom: 20px">
+          <label
+            for="emailMessage"
+            style="
+              display: block;
+              margin-bottom: 8px;
+              font-weight: 600;
+              color: #374151;
+            "
+            >Optional Message:</label
+          >
+          <textarea
+            id="emailMessage"
+            rows="4"
+            placeholder="Add a personal message..."
+            style="
+              width: 100%;
+              padding: 12px;
+              border: 2px solid #e2e8f0;
+              border-radius: 8px;
+              font-size: 16px;
+              resize: vertical;
+            "
+          ></textarea>
+        </div>
+        <div style="display: flex; gap: 12px; justify-content: flex-end">
+          <button
+            onclick="closeModal()"
+            style="
+              padding: 12px 24px;
+              background: #e2e8f0;
+              border: none;
+              border-radius: 8px;
+              cursor: pointer;
+              font-weight: 600;
+              color: #374151;
+            "
+          >
+            Cancel
+          </button>
+          <button
+            onclick="sendEmail()"
+            style="
+              padding: 12px 24px;
+              background: linear-gradient(135deg, #667eea, #764ba2);
+              color: white;
+              border: none;
+              border-radius: 8px;
+              cursor: pointer;
+              font-weight: 600;
+            "
+          >
+            Send Email
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script type="module" src="./src/js/mentalHealthResult.js"></script>
+  </body>
+</html>

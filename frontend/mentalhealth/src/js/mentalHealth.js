@@ -144,328 +144,28 @@ if (form) {
   });
 }
 
+// Replace getData to fetch questions from backend
 function getData() {
-  const mockData = {
-    data: {
-      Depression: {
-        Subjective: [
-          {
-            question: {
-              en: "How have you been feeling about your mood and energy levels lately?",
-              hi: "हाल ही में आपका मूड और ऊर्जा का स्तर कैसा रहा है?",
-              bn: "সম্প্রতি আপনার মেজাজ এবং শক্তির মাত্রা কেমন লাগছে?",
-            },
-          },
-          {
-            question: {
-              en: "Describe any changes in your sleep patterns or appetite.",
-              hi: "अपनी नींद के पैटर्न या भूख में कोई बदलाव का वर्णन करें।",
-              bn: "আপনার ঘুমের ধরন বা ক্ষুধায় কোনো পরিবর্তনের বর্ণনা দিন।",
-            },
-          },
-        ],
-        Objective: [
-          {
-            question: {
-              en: "Over the past two weeks, how often have you felt down, depressed, or hopeless?",
-              hi: "पिछले दो हफ्तों में, आपने कितनी बार उदास, अवसादग्रस्त या निराश महसूस किया है?",
-              bn: "গত দুই সপ্তাহে, আপনি কতবার হতাশ, বিষণ্ণ বা আশাহীন বোধ করেছেন?",
-            },
-            options: {
-              A: {
-                text: { en: "Not at all", hi: "बिल्कुल नहीं", bn: "একদমই নয়" },
-                score: 0,
-              },
-              B: {
-                text: { en: "Several days", hi: "कई दिन", bn: "কয়েক দিন" },
-                score: 1,
-              },
-              C: {
-                text: {
-                  en: "More than half the days",
-                  hi: "आधे से अधिक दिन",
-                  bn: "অর্ধেকের বেশি দিন",
-                },
-                score: 2,
-              },
-              D: {
-                text: {
-                  en: "Nearly every day",
-                  hi: "लगभग हर दिन",
-                  bn: "প্রায় প্রতিদিন",
-                },
-                score: 3,
-              },
-            },
-          },
-          {
-            question: {
-              en: "How often have you had little interest or pleasure in doing things?",
-              hi: "आपको काम करने में कितनी बार कम रुचि या खुशी महसूस हुई है?",
-              bn: "কাজকর্মে আগ্রহ বা আনন্দ কম লাগার অভিজ্ঞতা কতবার হয়েছে?",
-            },
-            options: {
-              A: {
-                text: { en: "Not at all", hi: "बिल्कुल नहीं", bn: "একদমই নয়" },
-                score: 0,
-              },
-              B: {
-                text: { en: "Several days", hi: "कई दिन", bn: "কয়েক দিন" },
-                score: 1,
-              },
-              C: {
-                text: {
-                  en: "More than half the days",
-                  hi: "आधे से अधिक दिन",
-                  bn: "অর্ধেকের বেশি দিন",
-                },
-                score: 2,
-              },
-              D: {
-                text: {
-                  en: "Nearly every day",
-                  hi: "लगभग हर दिन",
-                  bn: "প্রায় প্রতিদিন",
-                },
-                score: 3,
-              },
-            },
-          },
-        ],
-      },
-      Anxiety: {
-        Subjective: [
-          {
-            question: {
-              en: "What situations or thoughts tend to make you feel most anxious?",
-              hi: "कौन सी परिस्थितियां या विचार आपको सबसे अधिक चिंतित करते हैं?",
-              bn: "কোন পরিস্থিতি বা চিন্তা আপনাকে সবচেয়ে বেশি উদ্বিগ্ন করে তোলে?",
-            },
-          },
-          {
-            question: {
-              en: "How do you typically cope with feelings of worry or stress?",
-              hi: "आप आमतौर पर चिंता या तनाव की भावनाओं से कैसे निपटते हैं?",
-              bn: "আপনি সাধারণত দুশ্চিন্তা বা চাপের অনুভূতির সাথে কীভাবে মোকাবিলা করেন?",
-            },
-          },
-        ],
-        Objective: [
-          {
-            question: {
-              en: "Over the past two weeks, how often have you been bothered by feeling nervous, anxious, or on edge?",
-              hi: "पिछले दो हफ्तों में, घबराहट, चिंता या बेचैनी की भावना से आप कितनी बार परेशान हुए हैं?",
-              bn: "গত দুই সপ্তাহে, নার্ভাস, উদ্বিগ্ন বা অস্থির অনুভব করে কতবার বিরক্ত হয়েছেন?",
-            },
-            options: {
-              A: {
-                text: { en: "Not at all", hi: "बिल्कुल नहीं", bn: "একদমই নয়" },
-                score: 0,
-              },
-              B: {
-                text: { en: "Several days", hi: "कई दिन", bn: "কয়েক দিন" },
-                score: 1,
-              },
-              C: {
-                text: {
-                  en: "More than half the days",
-                  hi: "आधे से अधिक দিন",
-                  bn: "অর্ধেকের বেশি দিন",
-                },
-                score: 2,
-              },
-              D: {
-                text: {
-                  en: "Nearly every day",
-                  hi: "लगभग हर दिन",
-                  bn: "প্রায় প্রতিদিন",
-                },
-                score: 3,
-              },
-            },
-          },
-          {
-            question: {
-              en: "How often have you been unable to stop or control worrying?",
-              hi: "कितनी बार आप चिंता को रोकने या नियंत्रित करने में असमर্থ रहे हैं?",
-              bn: "কতবার আপনি দুশ্চিন্তা বন্ধ বা নিয়ন্ত্রণ করতে অক্ষম হয়েছেন?",
-            },
-            options: {
-              A: {
-                text: { en: "Not at all", hi: "बिल्कुल नहीं", bn: "একদমই নয়" },
-                score: 0,
-              },
-              B: {
-                text: { en: "Several days", hi: "कई दিन", bn: "কয়েক দিন" },
-                score: 1,
-              },
-              C: {
-                text: {
-                  en: "More than half the days",
-                  hi: "आধे से अধিক দিন",
-                  bn: "অর্ধেকের বেশি দিন",
-                },
-                score: 2,
-              },
-              D: {
-                text: {
-                  en: "Nearly every day",
-                  hi: "लगभग हर দিন",
-                  bn: "প্রায় প্রতিদিন",
-                },
-                score: 3,
-              },
-            },
-          },
-        ],
-      },
-      Cognitive: {
-        Subjective: [
-          {
-            question: {
-              en: "Have you noticed any changes in your memory or ability to concentrate?",
-              hi: "क्या आपने अपनी याददाश्त या ध्यान केंद्रित करने की क्षमता में कोई बदलाव देखा है?",
-              bn: "আপনার স্মৃতিশক্তি বা মনোযোগ দেওয়ার ক্ষমতায় কোনো পরিবর্তন লক্ষ্য করেছেন?",
-            },
-          },
-          {
-            question: {
-              en: "Describe any difficulties you have with daily tasks or decision-making.",
-              hi: "दैनिक कार्यों या निर্णয় लेने में आपको होने वाली कोई कठিनाइयों का वर্णन करें।",
-              bn: "দৈনন্দিন কাজ বা সিদ্ধান্ত নেওয়ার ক্ষেত্রে আপনার কোনো অসুবিধার বর্ণনা দিন।",
-            },
-          },
-        ],
-        Objective: [
-          {
-            question: {
-              en: "How often do you forget important appointments or events?",
-              hi: "आप कितनी बार महत्वपूर्ণ अपॉइंटमेंट या घटनाओं को भूल जाते हैं?",
-              bn: "আপনি কত ঘন ঘন গুরুত্वপূর্ণ অ্যাপয়েন্টমেন্ট বা ঘটনা ভুলে যান?",
-            },
-            options: {
-              A: {
-                text: { en: "Never", hi: "कभी नहीं", bn: "কখনো না" },
-                score: 0,
-              },
-              B: {
-                text: { en: "Rarely", hi: "शायद ही कभी", bn: "খুব কমই" },
-                score: 1,
-              },
-              C: {
-                text: { en: "Sometimes", hi: "कभी कभी", bn: "মাঝে মাঝে" },
-                score: 2,
-              },
-              D: {
-                text: { en: "Often", hi: "अक्सर", bn: "প্রায়ই" },
-                score: 3,
-              },
-            },
-          },
-          {
-            question: {
-              en: "How frequently do you have trouble finding the right words when speaking?",
-              hi: "बात करते समय सही शब्द खोजने में आपको कितनी बार परेशानी होती है?",
-              bn: "কথা বলার সময় সঠিক শব্দ খুঁজে পেতে কত ঘন ঘন সমস্যা হয়?",
-            },
-            options: {
-              A: {
-                text: { en: "Never", hi: "कभी नहीं", bn: "কখনো না" },
-                score: 0,
-              },
-              B: {
-                text: { en: "Rarely", hi: "शायद ही कभी", bn: "খুব কমই" },
-                score: 1,
-              },
-              C: {
-                text: { en: "Sometimes", hi: "कभी कभी", bn: "মাঝে মাঝে" },
-                score: 2,
-              },
-              D: {
-                text: { en: "Often", hi: "अक्सर", bn: "প্রায়ই" },
-                score: 3,
-              },
-            },
-          },
-        ],
-      },
-      Social: {
-        Subjective: [
-          {
-            question: {
-              en: "How do you feel about your current social connections and relationships?",
-              hi: "अपने वर्तमान सामाजिक संपर्कों और रिश्तों के बारे में आप कैसा महसूस करते हैं?",
-              bn: "আপনার বর্তমান সামাজিক সংযোগ এবং সম্পর্কের বিষয়ে আপনি কেমন অনুভব করেন?",
-            },
-          },
-          {
-            question: {
-              en: "What activities or hobbies do you engage in regularly?",
-              hi: "आप नियमित रूप से किन गतिविधियों या शौकों में संलग্न रहते हैं?",
-              bn: "আপনি নিয়মিত কোন কার্যকলাপ বা শখে নিযুক্ত থাকেন?",
-            },
-          },
-        ],
-        Objective: [
-          {
-            question: {
-              en: "How often do you feel lonely or isolated?",
-              hi: "आप कितनी बার अकेला या अलग-थलग महसूस করते हैं?",
-              bn: "আপনি কত ঘন ঘন একাকী বা বিচ্ছিন্ন বোধ করেন?",
-            },
-            options: {
-              A: {
-                text: { en: "Never", hi: "कभी नहीं", bn: "কখনো না" },
-                score: 0,
-              },
-              B: {
-                text: { en: "Rarely", hi: "शायद ही कभी", bn: "খুব কমই" },
-                score: 1,
-              },
-              C: {
-                text: { en: "Sometimes", hi: "कभी कभी", bn: "মাঝে মাঝে" },
-                score: 2,
-              },
-              D: {
-                text: { en: "Often", hi: "अक्सर", bn: "প্রায়ই" },
-                score: 3,
-              },
-            },
-          },
-          {
-            question: {
-              en: "How frequently do you participate in social activities or gatherings?",
-              hi: "आप कितनी बार सामाजिक गतिविধियों या सभाओं में भाग लेते हैं?",
-              bn: "আপনি কত ঘন ঘন সামাজিক ক্রিয়াকলাপ বা জমায়েতে অংশগ্রহণ করেন?",
-            },
-            options: {
-              A: {
-                text: { en: "Very often", hi: "बहुत बार", bn: "খুব ঘন ঘন" },
-                score: 0,
-              },
-              B: {
-                text: { en: "Sometimes", hi: "कभी कभी", bn: "মাঝে মাঝে" },
-                score: 1,
-              },
-              C: {
-                text: { en: "Rarely", hi: "शायद ही कभी", bn: "খুব কমই" },
-                score: 2,
-              },
-              D: {
-                text: { en: "Never", hi: "कभी नहीं", bn: "কখনো না" },
-                score: 3,
-              },
-            },
-          },
-        ],
-      },
-    },
-  };
-
-  console.log(mockData.data);
-  questions = extractAllQuestions(mockData.data);
-  console.log(questions);
-  displayQuestions(questions, 0);
+  fetch("http://localhost:8000/api/mentalhealth/question")
+    .then((res) => res.json())
+    .then((result) => {
+      if (!result.success || !result.data) {
+        throw new Error("Failed to fetch questions from backend");
+      }
+      // Use backend questions
+      questions = extractAllQuestions(result.data);
+      displayQuestions(questions, 0);
+    })
+    .catch((err) => {
+      questionContainer.innerHTML = `
+        <div class="error-message" style="text-align: center; padding: 30px;">
+          <i class="fas fa-exclamation-triangle" style="font-size: 48px; color: #ef4444; margin-bottom: 20px;"></i>
+          <h3 style="color: #ef4444; margin-bottom: 15px;">Failed to Load Questions</h3>
+          <p style="color: #6b7280; margin-bottom: 20px;">${err.message}</p>
+          <button onclick="resetAssessment()" style="background: linear-gradient(135deg, #667eea, #764ba2); color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-weight: 600;">Try Again</button>
+        </div>
+      `;
+    });
 }
 
 function displayQuestions(data, index = 0) {
@@ -500,17 +200,21 @@ function updateProgress(index) {
   }
 }
 
+// In extractAllQuestions, use backend's question id for subjective
 function extractAllQuestions(data) {
   const all = [];
   for (const section in data) {
     ["Subjective", "Objective"].forEach((type) => {
       if (Array.isArray(data[section][type])) {
-        data[section][type].forEach((q) => {
+        data[section][type].forEach((q, idx) => {
           const newQ = {
             ...q,
             section,
             type: type.toLowerCase(),
           };
+          if (type.toLowerCase() === "subjective") {
+            newQ.questionId = q.id || `Q${idx + 1}`;
+          }
           if (type.toLowerCase() === "objective") {
             newQ.options = Object.entries(q.options || {}).map(
               ([key, val]) => ({
@@ -519,6 +223,7 @@ function extractAllQuestions(data) {
                 score: val.score,
               })
             );
+            newQ.questionIndex = idx;
           }
           all.push(newQ);
         });
@@ -618,13 +323,20 @@ nextBtn.addEventListener("click", () => {
     selectedAnswer = textarea.value.trim();
   }
 
-  userInfo.responses.push({
-    question: q.question,
+  // --- Map to backend expected format ---
+  let answerObj = {
     section: q.section,
-    type: q.type,
-    selectedAnswer,
-    timeTaken,
-  });
+    type: q.type === "objective" ? "Objective" : "Subjective"
+  };
+  if (q.type === "subjective") {
+    answerObj.questionId = q.questionId || `Q${currentIndex + 1}`; // fallback if missing
+    answerObj.answer = selectedAnswer;
+  } else {
+    answerObj.questionIndex = typeof q.questionIndex === "number" ? q.questionIndex : currentIndex;
+    answerObj.selectedOption = q.options && q.options.find(opt => opt.text[selectedLanguage] === selectedAnswer || opt.text.en === selectedAnswer)?.key || selectedAnswer;
+  }
+  userInfo.responses.push(answerObj);
+  // --- End mapping ---
 
   currentIndex++;
   if (currentIndex < questions.length) {
@@ -641,17 +353,27 @@ nextBtn.addEventListener("click", () => {
 });
 
 function sendData(data) {
-  console.log("Submitting data:", data);
+  // --- Prepare payload for backend ---
+  const formData = data.data || {};
+  const userId = formData.email || formData.name || `user_${Date.now()}`;
+  const payload = {
+    userAnswers: data.responses,
+    userId: userId,
+    userName: formData.name || ""
+  };
+  // --- End payload ---
+
+  console.log("Submitting data:", payload);
 
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 10000);
 
-  fetch("http://localhost:8000/api/mentalhealth/predict", {
+  fetch("http://localhost:8000/api/mentalhealth/", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify(data),
+    body: JSON.stringify(payload),
     signal: controller.signal,
   })
     .then((response) => {
@@ -668,16 +390,10 @@ function sendData(data) {
       localStorage.removeItem("savedUserInfo");
       localStorage.removeItem("savedIndex");
 
-      questionContainer.innerHTML = `
-            <div class="success-message" style="text-align: center; padding: 30px;">
-                <i class="fas fa-check-circle" style="font-size: 48px; color: #10b981; margin-bottom: 20px;"></i>
-                <h3 style="color: #10b981; margin-bottom: 15px;">Assessment Complete!</h3>
-                <p style="color: #6b7280; margin-bottom: 20px;">Thank you for completing the mental health assessment. Your responses have been successfully recorded.</p>
-                <button onclick="location.reload()" style="background: linear-gradient(135deg, #667eea, #764ba2); color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-weight: 600;">
-                    Take Another Assessment
-                </button>
-            </div>
-        `;
+      // --- Save backend result and redirect to results page ---
+      localStorage.setItem("mh_assessment_result", JSON.stringify(result.data));
+      window.location.href = "mentalHealthResult.html";
+      // --- End redirect ---
     })
     .catch((err) => {
       clearTimeout(timeoutId);
@@ -695,10 +411,49 @@ function sendData(data) {
                 <i class="fas fa-exclamation-triangle" style="font-size: 48px; color: #ef4444; margin-bottom: 20px;"></i>
                 <h3 style="color: #ef4444; margin-bottom: 15px;">Submission Failed</h3>
                 <p style="color: #6b7280; margin-bottom: 20px;">${errorText}</p>
-                <button onclick="location.reload()" style="background: linear-gradient(135deg, #667eea, #764ba2); color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-weight: 600;">
+                <button onclick="resetAssessment()" style="background: linear-gradient(135deg, #667eea, #764ba2); color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-weight: 600;">
                     Try Again
                 </button>
             </div>
         `;
     });
+}
+
+// Add this function to reset the assessment state
+function resetAssessment() {
+  // Reset state variables
+  questions = [];
+  currentIndex = 0;
+  startTime = null;
+  userInfo = { createdAt: new Date().toISOString(), data: {}, responses: [] };
+  // Reset form fields
+  if (form) form.reset();
+  // Show the user details form
+  container.style.transform = "translateX(0)";
+  container.style.opacity = "1";
+  container.style.display = "block";
+  // Hide the question container and messages
+  questionContainer.classList.add("hidden");
+  questionContainer.innerHTML = `
+    <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width: 0%"></div></div>
+    <div id="progressText" style="text-align: center; margin-bottom: 20px; font-weight: 600; color: #667eea;"></div>
+    <h2 id="sectionHeading" class="section-heading"></h2>
+    <h3 id="questionTypeTitle" class="question-type"></h3>
+    <p id="questionText" class="question-text"></p>
+    <div id="optionsContainer" class="options-container"></div>
+    <p id="errorMsg" class="error-message hidden"></p>
+    <button id="nextBtn" class="next-btn">Next<i class="fas fa-arrow-right"></i></button>
+  `;
+  // Hide any messages
+  if (successMessage) successMessage.classList.add("hidden");
+  if (errorMessage) errorMessage.classList.add("hidden");
+  // Re-attach nextBtn event listener
+  setTimeout(() => {
+    const newNextBtn = document.getElementById("nextBtn");
+    if (newNextBtn) {
+      newNextBtn.addEventListener("click", () => {
+        nextBtn.click();
+      });
+    }
+  }, 100);
 }

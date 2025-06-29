@@ -449,6 +449,7 @@ body::before {
     color: #ef4444;
     font-size: 14px;
     margin-top: 8px;
+    margin-bottom: 15px;
     padding: 12px;
     background: rgba(239, 68, 68, 0.1);
     border-radius: 8px;
