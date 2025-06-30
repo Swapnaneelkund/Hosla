@@ -8,7 +8,6 @@ export const sendResultsEmail = async (req, res) => {
         return res.status(400).json({ error: 'Missing email or results' });
     }
 
-    // Configure your transporter using environment variables
     const transporter = nodemailer.createTransport({
         service: 'gmail',
         auth: {

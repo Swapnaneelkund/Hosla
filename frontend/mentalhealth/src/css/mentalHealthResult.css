@@ -436,7 +436,6 @@ body::before {
   text-align: center;
 }
 
-/* Ensure the chart canvas does not grow infinitely */
 #detailedChart {
   width: 100% !important;
   height: 250px !important;
@@ -503,6 +502,118 @@ body::before {
   margin-top: 40px;
 }
 
+.participant-info {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+  border: 2px solid rgba(102, 126, 234, 0.2);
+  border-radius: 20px;
+  padding: 20px 30px;
+  margin: 20px auto;
+  max-width: 600px;
+  position: relative;
+  overflow: hidden;
+  animation: slideInFromTop 0.8s ease-out;
+}
+
+.participant-info::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #667eea, #764ba2, #667eea);
+  background-size: 200% 100%;
+  animation: shimmer 2s linear infinite;
+}
+
+.participant-avatar {
+  width: 60px;
+  height: 60px;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 24px;
+  box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+  position: relative;
+  overflow: hidden;
+}
+
+.participant-avatar::after {
+  content: "";
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  transform: rotate(45deg);
+  animation: avatarShine 3s ease-in-out infinite;
+}
+
+.participant-details {
+  flex: 1;
+  text-align: left;
+}
+
+.participant-label {
+  font-size: 14px;
+  color: #64748b;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 4px;
+}
+
+.participant-name {
+  font-size: 24px;
+  font-weight: 700;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin: 0;
+}
+
+.participant-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(16, 185, 129, 0.1);
+  color: #10b981;
+  padding: 10px 16px;
+  border-radius: 25px;
+  font-size: 14px;
+  font-weight: 600;
+  border: 2px solid rgba(16, 185, 129, 0.2);
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.participant-badge i {
+  font-size: 16px;
+}
+
+/* Responsive styles */
+@media (max-width: 600px) {
+  .participant-info {
+    flex-direction: column;
+    gap: 15px;
+    text-align: center;
+  }
+  .participant-details {
+    text-align: center;
+  }
+  .participant-name {
+    font-size: 20px;
+  }
+}
+
 @keyframes gradientShift {
   0% {
     background-position: 0% 50%;
@@ -530,83 +641,173 @@ body::before {
   }
 }
 
-@media (max-width: 768px) {
-  .main-container {
-    padding: 16px;
+@keyframes slideInFromTop {
+  0% {
+    transform: translateY(-40px);
+    opacity: 0;
   }
-
-  .results-card {
-    padding: 24px;
+  100% {
+    transform: translateY(0);
+    opacity: 1;
   }
-
-  .score-overview {
-    grid-template-columns: 1fr;
-    gap: 20px;
+}
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
   }
-
-  .score-circle {
-    width: 150px;
-    height: 150px;
+  100% {
+    background-position: -200% 0;
   }
-
-  .score-number {
-    font-size: 36px;
+}
+@keyframes avatarShine {
+  0%,
+  100% {
+    opacity: 0.2;
   }
-
-  .results-title {
-    font-size: 24px;
+  50% {
+    opacity: 0.5;
   }
-
-  .section-grid,
-  .recommendations-grid,
-  .actions-section {
-    grid-template-columns: 1fr;
+}
+@keyframes pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(16 185 129 / 0.3);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(16 185 129 / 0.1);
   }
 }
 
+/* Modal Styles */
 .modal {
-  display: none;
-  position: fixed;
-  z-index: 1000;
-  left: 0;
-  top: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(5px);
+    display: none; 
+    position: fixed; 
+    z-index: 1000; 
+    left: 0;
+    top: 0;
+    width: 100%; 
+    height: 100%; 
+    overflow: auto; 
+    background-color: rgba(0, 0, 0, 0.6); 
+    backdrop-filter: blur(5px); 
+    animation: fadeIn 0.3s ease-in-out;
 }
 
 .modal-content {
-  background: white;
-  margin: 5% auto;
-  padding: 30px;
-  border-radius: 20px;
-  width: 90%;
-  max-width: 500px;
-  position: relative;
-  animation: slideIn 0.3s ease;
+    background: rgb(255 255 255 / 0.98);
+    backdrop-filter: blur(20px);
+    margin: 5% auto; 
+    padding: 30px;
+    border-radius: 24px;
+    width: 90%; /* Could be more or less, depending on screen size */
+    max-width: 500px;
+    position: relative;
+    box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.4), 
+                0 0 0 1px rgb(255 255 255 / 0.2), 
+                inset 0 1px 0 rgb(255 255 255 / 0.3);
+    animation: slideIn 0.3s ease-out;
 }
 
+/* Close Button */
 .close {
-  position: absolute;
-  right: 20px;
-  top: 20px;
-  font-size: 24px;
-  cursor: pointer;
-  color: #64748b;
+    color: #64748b;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    position: absolute;
+    right: 20px;
+    top: 20px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: rgba(100, 116, 139, 0.1);
 }
 
-.close:hover {
-  color: #374151;
+.close:hover,
+.close:focus {
+    color: #ef4444;
+    background: rgba(239, 68, 68, 0.1);
+    transform: scale(1.1);
+}
+
+/* Form Styles within Modal */
+.modal input[type="email"],
+.modal textarea {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 16px;
+    font-family: inherit;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    background: rgba(255, 255, 255, 0.9);
+}
+
+.modal input[type="email"]:focus,
+.modal textarea:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.modal textarea {
+    resize: vertical;
+    min-height: 100px;
+}
+
+/* Modal Button Styles */
+.modal button {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+.modal button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
 }
 
 @keyframes slideIn {
-  from {
-    opacity: 0;
-    transform: translateY(-50px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+    from { 
+        transform: translateY(-50px);
+        opacity: 0;
+    }
+    to { 
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .modal-content {
+        width: 95%;
+        margin: 10% auto;
+        padding: 20px;
+    }
+    
+    .close {
+        right: 15px;
+        top: 15px;
+    }
+}
+
+/* Show modal when active */
+.modal.show {
+    display: block;
 }

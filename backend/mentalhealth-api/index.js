@@ -1,4 +1,3 @@
-// temp-server.js (you can delete after test)
 import { app } from "./app.js";
 import logger from "./utils/logger.js";
 

@@ -25,16 +25,26 @@
       <div class="results-card">
         <div class="results-header">
           <h1 class="results-title">Your Mental Health Assessment Results</h1>
-          <p
-            class="participant-name"
-            id="participantName"
-            style="
-              display: none;
-              font-size: 1.1em;
-              color: #374151;
-              margin: 4px 0 0 0;
-            "
-          ></p>
+
+          <!-- Enhanced Username Display -->
+          <div
+            class="participant-info"
+            id="participantInfo"
+            style="display: none"
+          >
+            <div class="participant-avatar">
+              <i class="fas fa-user"></i>
+            </div>
+            <div class="participant-details">
+              <div class="participant-label">Assessment for</div>
+              <div class="participant-name" id="participantName"></div>
+            </div>
+            <div class="participant-badge">
+              <i class="fas fa-check-circle"></i>
+              <span>Completed</span>
+            </div>
+          </div>
+
           <p class="results-timestamp" id="timestamp"></p>
         </div>
 
@@ -213,6 +223,8 @@
       </div>
     </div>
 
-    <script type="module" src="./src/js/mentalHealthResult.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="./src/js/mentalHealthResult.js"></script>
   </body>
 </html>

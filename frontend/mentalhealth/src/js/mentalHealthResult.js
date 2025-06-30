@@ -1,4 +1,4 @@
-// Sample data structure - replace with actual data from your backend
+// Sample data structure - replaced with actual data from backend
 const sampleResults = {
     userId: "user123",
     assessment: {
@@ -62,12 +62,12 @@ let detailedChart = null;
 function initializeResults() {
     // Try to load real data from localStorage
     const stored = localStorage.getItem("mh_assessment_result");
-    console.log("[MH] Raw localStorage value:", stored); // Log the raw JSON string
+    console.log("[MH] Raw localStorage value:", stored);
     let error = null;
     if (stored) {
         try {
             resultsData = JSON.parse(stored);
-            console.log("[MH] Parsed localStorage JSON:", resultsData); // Log the parsed object
+            console.log("[MH] Parsed localStorage JSON:", resultsData);
             // Validate structure
             if (!resultsData || !resultsData.assessment || typeof resultsData.assessment.percentage !== "number") {
                 throw new Error("Invalid assessment data structure");
@@ -80,7 +80,7 @@ function initializeResults() {
         }
     }
     if (!resultsData) {
-        // Show a warning if no real data is found
+        // warning if no real data is found
         resultsData = sampleResults;
         showNoResultsWarning(error);
     }
@@ -90,7 +90,7 @@ function initializeResults() {
 }
 
 function showNoResultsWarning(error) {
-    // Show a warning message at the top of the page if no real results are found
+    // warning message at the top of the page if no real results are found
     let container = document.querySelector(".main-container");
     if (!container) return;
     const warning = document.createElement("div");
@@ -141,16 +141,7 @@ function displayResults(data) {
     document.getElementById("scoreMessage").textContent = data.message;
 
     // Update participant name if available
-    const participantName = (data.userName || (data.data && data.data.name) || null);
-    const nameElement = document.getElementById("participantName");
-    if (nameElement) {
-        if (participantName) {
-            nameElement.textContent = `Participant: ${participantName}`;
-            nameElement.style.display = "block";
-        } else {
-            nameElement.style.display = "none";
-        }
-    }
+    displayParticipantInfo(data);
 
     // Display section breakdown
     displaySectionBreakdown(assessment.sectionBreakdown);
@@ -171,6 +162,21 @@ function getRiskLevel(percentage) {
         return { text: "Moderate", class: "risk-moderate" };
     } else {
         return { text: "Needs Attention", class: "risk-attention" };
+    }
+}
+
+function displayParticipantInfo(data) {
+    const participantName = data.userName || (data.data && data.data.name) || null;
+    const participantInfo = document.getElementById("participantInfo");
+    const nameElement = document.getElementById("participantName");
+
+    if (participantInfo && nameElement) {
+        if (participantName) {
+            nameElement.textContent = participantName;
+            participantInfo.style.display = "flex";
+        } else {
+            participantInfo.style.display = "none";
+        }
     }
 }
 
@@ -289,7 +295,6 @@ function displayResources(score) {
         )
         .join("");
 
-    // Add event listeners for click
     document.querySelectorAll(".resource-item").forEach((item) => {
         const idx = item.getAttribute("data-resource-idx");
         const url = resources[idx].url;
@@ -441,73 +446,310 @@ function animateElements() {
 }
 
 // Action button functions
+// PDF generation function with styling
 function downloadPDF() {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
-
-    // Add title
-    doc.setFontSize(20);
-    doc.setTextColor(102, 126, 234);
-    doc.text("Mental Health Assessment Results", 20, 30);
-
-    // Add date
+    
+    // Color scheme
+    const colors = {
+        primary: [102, 126, 234],
+        secondary: [100, 116, 139],
+        accent: [59, 130, 246],
+        success: [34, 197, 94],
+        warning: [251, 191, 36],
+        danger: [239, 68, 68],
+        light: [248, 250, 252],
+        dark: [15, 23, 42]
+    };
+    
+    // Helper function to add colored rectangle
+    function addColoredRect(x, y, width, height, color, opacity = 1) {
+        if (opacity < 1) {
+            const lightColor = color.map(c => Math.min(255, c + (255 - c) * (1 - opacity)));
+            doc.setFillColor(lightColor[0], lightColor[1], lightColor[2]);
+        } else {
+            doc.setFillColor(color[0], color[1], color[2]);
+        }
+        doc.rect(x, y, width, height, 'F');
+    }
+    
+    // Helper function to add section divider
+    function addSectionDivider(y, title) {
+        // Draw a line instead of rectangle for better compatibility
+        doc.setDrawColor(colors.primary[0], colors.primary[1], colors.primary[2]);
+        doc.setLineWidth(0.5);
+        doc.line(20, y, 190, y);
+        
+        doc.setFontSize(14);
+        doc.setTextColor(colors.primary[0], colors.primary[1], colors.primary[2]);
+        doc.setFont(undefined, 'bold');
+        doc.text(title, 20, y + 10);
+        return y + 20;
+    }
+    
+    // PAGE 1: Header and Overview
+    let currentY = 20;
+    
+    addColoredRect(0, 0, 210, 50, [230, 235, 250], 1);
+    
+    // Logo/Title section
+    doc.setFontSize(24);
+    doc.setTextColor(colors.primary[0], colors.primary[1], colors.primary[2]);
+    doc.setFont(undefined, 'bold');
+    doc.text('Mental Health Assessment', 20, 25);
+    doc.text('Results Report', 20, 35);
+    
+    // Date and participant info
     doc.setFontSize(12);
-    doc.setTextColor(100, 116, 139);
-    doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 20, 45);
-
-    // Add overall score
-    doc.setFontSize(16);
-    doc.setTextColor(55, 65, 81);
-    doc.text(
-        `Overall Score: ${resultsData.assessment.percentage}%`,
-        20,
-        65
-    );
-
+    doc.setTextColor(colors.secondary[0], colors.secondary[1], colors.secondary[2]);
+    doc.setFont(undefined, 'normal');
+    const currentDate = new Date().toLocaleDateString('en-US', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+    });
+    doc.text(`Generated on: ${currentDate}`, 20, 45);
+    
+    // Participant name if available
+    const participantName = resultsData.userName || (resultsData.data && resultsData.data.name) || 'Anonymous';
+    if (participantName !== 'Anonymous') {
+        doc.text(`Participant: ${participantName}`, 120, 45);
+    }
+    
+    currentY = 65;
+    
+    // Overall Score Section with background
+    addColoredRect(20, currentY, 170, 40, [252, 252, 253], 1); // Very light gray
+    
+    // Score circle using lines
+    doc.setDrawColor(colors.primary[0], colors.primary[1], colors.primary[2]);
+    doc.setLineWidth(3);
+    doc.circle(50, currentY + 20, 15, 'S'); // 'S' for stroke only
+    
+    // Score percentage
+    doc.setFontSize(20);
+    doc.setTextColor(colors.primary[0], colors.primary[1], colors.primary[2]);
+    doc.setFont(undefined, 'bold');
+    const scoreText = `${resultsData.assessment.percentage}%`;
+    const scoreWidth = doc.getTextWidth(scoreText);
+    doc.text(scoreText, 50 - scoreWidth/2, currentY + 25);
+    
+    // Risk level and description
     const riskLevel = getRiskLevel(resultsData.assessment.percentage);
-    doc.text(`Risk Level: ${riskLevel.text}`, 20, 80);
-
-    // Add section breakdown
-    doc.setFontSize(14);
-    doc.text("Section Breakdown:", 20, 100);
-
-    let yPosition = 115;
-    Object.entries(resultsData.assessment.sectionBreakdown).forEach(
-        ([section, data]) => {
-            doc.setFontSize(12);
-            doc.text(
-                `${section}: ${Math.round(data.percentage)}% (${data.score}/${data.maxScore
-                })`,
-                25,
-                yPosition
-            );
-            yPosition += 15;
-        }
-    );
-
-    // Add recommendations
-    doc.setFontSize(14);
-    doc.text("Recommendations:", 20, yPosition + 10);
-    yPosition += 25;
-
-    Object.entries(resultsData.assessment.sectionRecommendations).forEach(
-        ([section, data]) => {
-            doc.setFontSize(12);
-            doc.setTextColor(55, 65, 81);
-            doc.text(`${section}:`, 25, yPosition);
-            yPosition += 15;
-
-            data.recommendations.forEach((rec) => {
-                const lines = doc.splitTextToSize(`• ${rec}`, 160);
-                doc.text(lines, 30, yPosition);
-                yPosition += lines.length * 10;
+    doc.setFontSize(18);
+    doc.setFont(undefined, 'bold');
+    
+    // Set color based on risk level
+    let riskColor = colors.success;
+    if (riskLevel.text === 'Good') riskColor = colors.accent;
+    else if (riskLevel.text === 'Moderate') riskColor = colors.warning;
+    else if (riskLevel.text === 'Needs Attention') riskColor = colors.danger;
+    
+    doc.setTextColor(riskColor[0], riskColor[1], riskColor[2]);
+    doc.text(`Status: ${riskLevel.text}`, 80, currentY + 15);
+    
+    doc.setFontSize(12);
+    doc.setTextColor(colors.dark[0], colors.dark[1], colors.dark[2]);
+    doc.setFont(undefined, 'normal');
+    doc.text(`Total Score: ${resultsData.assessment.totalScore}/${resultsData.assessment.maxScore}`, 80, currentY + 25);
+    
+    // Message
+    const messageLines = doc.splitTextToSize(resultsData.message, 100);
+    doc.text(messageLines, 80, currentY + 35);
+    
+    currentY += 60;
+    
+    // Section Breakdown
+    currentY = addSectionDivider(currentY, 'SECTION BREAKDOWN');
+    
+    const sections = resultsData.assessment.sectionBreakdown;
+    const sectionEntries = Object.entries(sections);
+    
+    sectionEntries.forEach(([sectionName, data], index) => {
+        // Section item background (alternating colors)
+        const bgColor = index % 2 === 0 ? [248, 250, 252] : [255, 255, 255];
+        addColoredRect(20, currentY - 5, 170, 25, bgColor, 1);
+        
+        // Section name
+        doc.setFontSize(12);
+        doc.setTextColor(colors.dark[0], colors.dark[1], colors.dark[2]);
+        doc.setFont(undefined, 'bold');
+        doc.text(sectionName, 25, currentY + 5);
+        
+        // Score
+        doc.setFont(undefined, 'normal');
+        doc.text(`${data.score}/${data.maxScore}`, 25, currentY + 15);
+        
+        // Percentage
+        doc.setFontSize(14);
+        doc.setTextColor(colors.primary[0], colors.primary[1], colors.primary[2]);
+        doc.setFont(undefined, 'bold');
+        doc.text(`${Math.round(data.percentage)}%`, 160, currentY + 10);
+        
+        // Progress bar
+        const barWidth = 80;
+        const barHeight = 4;
+        const barX = 70;
+        const barY = currentY + 8;
+        
+        // Background bar (light gray)
+        addColoredRect(barX, barY, barWidth, barHeight, [226, 232, 240], 1);
+        
+        // Progress bar
+        const progressWidth = (data.percentage / 100) * barWidth;
+        let progressColor = colors.success;
+        if (data.percentage < 70) progressColor = colors.warning;
+        if (data.percentage < 50) progressColor = colors.danger;
+        
+        addColoredRect(barX, barY, progressWidth, barHeight, progressColor, 1);
+        
+        currentY += 30;
+    });
+    
+    // Add new page for recommendations
+    doc.addPage();
+    currentY = 20;
+    
+    // Header on second page
+    addColoredRect(0, 0, 210, 30, [230, 235, 250], 1);
+    doc.setFontSize(18);
+    doc.setTextColor(colors.primary[0], colors.primary[1], colors.primary[2]);
+    doc.setFont(undefined, 'bold');
+    doc.text('Personalized Recommendations', 20, 20);
+    
+    currentY = 45;
+    
+    // Recommendations section
+    const recommendations = resultsData.assessment.sectionRecommendations;
+    
+    if (recommendations && Object.keys(recommendations).length > 0) {
+        Object.entries(recommendations).forEach(([sectionName, data]) => {
+            // Check if we need a new page
+            if (currentY > 250) {
+                doc.addPage();
+                currentY = 20;
+            }
+            
+            // Section header with priority indicator
+            let priorityColor = colors.success;
+            let priorityText = '●';
+            if (data.priority === 'high') {
+                priorityColor = colors.danger;
+                priorityText = '!';
+            } else if (data.priority === 'medium') {
+                priorityColor = colors.warning;
+                priorityText = '◐';
+            }
+            
+            // Priority indicator
+            doc.setFontSize(16);
+            doc.setTextColor(priorityColor[0], priorityColor[1], priorityColor[2]);
+            doc.text(priorityText, 20, currentY);
+            
+            // Section name
+            doc.setFontSize(14);
+            doc.setTextColor(colors.dark[0], colors.dark[1], colors.dark[2]);
+            doc.setFont(undefined, 'bold');
+            doc.text(sectionName, 30, currentY);
+            
+            // Priority label
+            doc.setFontSize(10);
+            doc.setTextColor(priorityColor[0], priorityColor[1], priorityColor[2]);
+            doc.setFont(undefined, 'normal');
+            doc.text(`(${data.priority.toUpperCase()} PRIORITY)`, 150, currentY);
+            
+            currentY += 15;
+            
+            // Recommendations
+            data.recommendations.forEach((recommendation, index) => {
+                doc.setFontSize(11);
+                doc.setTextColor(colors.secondary[0], colors.secondary[1], colors.secondary[2]);
+                doc.setFont(undefined, 'normal');
+                
+                // Bullet point
+                doc.text('•', 25, currentY);
+                
+                // Recommendation text
+                const recLines = doc.splitTextToSize(recommendation, 155);
+                doc.text(recLines, 35, currentY);
+                
+                currentY += recLines.length * 5 + 5;
             });
-            yPosition += 5;
-        }
-    );
-
+            
+            currentY += 10;
+        });
+    }
+    
+    // Footer with resources
+    if (currentY > 220) {
+        doc.addPage();
+        currentY = 20;
+    }
+    
+    currentY = addSectionDivider(currentY, 'HELPFUL RESOURCES');
+    
+    // Emergency contact
+    addColoredRect(20, currentY, 170, 20, [254, 242, 242], 1); // Light red background
+    doc.setFontSize(12);
+    doc.setTextColor(colors.danger[0], colors.danger[1], colors.danger[2]);
+    doc.setFont(undefined, 'bold');
+    doc.text('Emergency Helpline: +91 7811-009-309', 25, currentY + 10);
+    doc.setFont(undefined, 'normal');
+    doc.text('Available 24/7 for immediate support', 25, currentY + 15);
+    
+    currentY += 35;
+    
+    // Additional resources
+    const resources = [
+        'Mental Health Resources: medicalnewstoday.com/articles/154543',
+        'Support Groups: meetup.com/topics/mental-health-support',
+        'Find a Therapist: thelivelovelaughfoundation.org/find-help/therapist'
+    ];
+    
+    resources.forEach(resource => {
+        doc.setFontSize(10);
+        doc.setTextColor(colors.secondary[0], colors.secondary[1], colors.secondary[2]);
+        doc.text('• ' + resource, 25, currentY);
+        currentY += 12;
+    });
+    
+    // Disclaimer
+    currentY += 20;
+    addColoredRect(20, currentY, 170, 25, [252, 252, 253], 1); // Light gray
+    doc.setFontSize(9);
+    doc.setTextColor(colors.secondary[0], colors.secondary[1], colors.secondary[2]);
+    doc.setFont(undefined, 'italic');
+    const disclaimer = 'Disclaimer: This assessment is for informational purposes only and should not replace professional medical advice. Please consult with a qualified healthcare provider for proper diagnosis and treatment.';
+    const disclaimerLines = doc.splitTextToSize(disclaimer, 165);
+    doc.text(disclaimerLines, 22, currentY + 5);
+    
     // Save the PDF
-    doc.save("mental-health-assessment-results.pdf");
+    const fileName = participantName !== 'Anonymous' 
+        ? `${participantName.replace(/\s+/g, '_')}_Mental_Health_Assessment.pdf`
+        : 'Mental_Health_Assessment_Results.pdf';
+    
+    doc.save(fileName);
+}
+
+// Alternative: PDF with Chart.js integration (if you want to include charts)
+function downloadPDFWithCharts() {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+
+    // First create the basic PDF structure as above
+    downloadPDF();
+
+    // Then, if you want to add charts, you can capture the canvas elements
+    // and add them to the PDF (this requires html2canvas library)
+    /*
+    html2canvas(document.getElementById('scoreChart')).then(canvas => {
+        const imgData = canvas.toDataURL('image/png');
+        doc.addImage(imgData, 'PNG', 20, 120, 80, 60);
+        doc.save('assessment-results-with-charts.pdf');
+    });
+    */
 }
 
 function emailResults() {
@@ -536,18 +778,18 @@ function sendEmail() {
             results: resultsData
         })
     })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            alert("Results have been sent to " + email);
-            closeModal();
-        } else {
-            alert("Failed to send email: " + (data.error || "Unknown error"));
-        }
-    })
-    .catch(err => {
-        alert("Error sending email: " + err.message);
-    });
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert("Results have been sent to " + email);
+                closeModal();
+            } else {
+                alert("Failed to send email: " + (data.error || "Unknown error"));
+            }
+        })
+        .catch(err => {
+            alert("Error sending email: " + err.message);
+        });
 }
 
 function shareResults() {
@@ -571,8 +813,7 @@ function retakeAssessment() {
             "Are you sure you want to start a new assessment? This will clear your current results."
         )
     ) {
-        // In production, you would navigate back to the assessment form
-        window.location.href = "mentalHealth.html"; // or wherever your assessment form is
+        window.location.href = "mentalHealth.html";
     }
 }
 
@@ -584,7 +825,6 @@ window.retakeAssessment = retakeAssessment;
 window.closeModal = closeModal;
 window.sendEmail = sendEmail;
 
-// Initialize when page loads
 document.addEventListener("DOMContentLoaded", function () {
     initializeResults();
 

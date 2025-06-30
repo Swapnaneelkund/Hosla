@@ -1,4 +1,3 @@
-// predictController.js
 import calculateScore, { getSectionRecommendations } from "../utils/scoring.js";
 import mentalAgeQuestionnaire from "../data/question.js";
 import { apiResponce } from "../utils/ApiResponseHandler.js";
@@ -49,7 +48,6 @@ export const predictMentalHealth = async (req, res) => {
       };
     });
 
-    // Convert sectionRecommendations to object keyed by display name, add priority (optional)
     const sectionRecommendationsObj = {};
     Object.entries(sectionRecommendationsRaw).forEach(([internalName, recs]) => {
       const displayName = sectionNameMap[internalName] || internalName;
@@ -69,7 +67,7 @@ export const predictMentalHealth = async (req, res) => {
       };
     });
 
-    // Prepare the response data
+    // response data
     const responseData = {
       userId: userId || null,
       userName: userName || null,
@@ -81,7 +79,6 @@ export const predictMentalHealth = async (req, res) => {
       message: generatePersonalizedMessage(scoringResult.percentage, scoringResult.mentalAgeCategory)
     };
 
-    // Log for analytics (optional)
     console.log(`Mental Health Assessment completed - Score: ${scoringResult.percentage}%, Category: ${scoringResult.mentalAgeCategory}`);
     
     const response = new apiResponce(200, responseData, "Mental health assessment completed successfully");

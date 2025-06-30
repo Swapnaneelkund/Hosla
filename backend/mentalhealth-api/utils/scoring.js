@@ -4,7 +4,7 @@
  */
 
 /**
- * Enhanced subjective answer evaluation with improved NLP
+ * subjective answer evaluation with improved NLP
  * @param {string} answer - User's text response
  * @param {Array} criteria - Array of criteria keywords/phrases
  * @param {number} weight - Question weight
@@ -25,7 +25,7 @@ function evaluateSubjectiveAnswer(answer, criteria, weight) {
   const matchedCriteria = [];
   let criteriaScore = 0;
 
-  // Enhanced keyword matching with synonyms and context
+  // keyword matching with synonyms and context
   const synonymMap = {
     'peace': ['tranquility', 'calm', 'serenity', 'harmony', 'stillness'],
     'gratitude': ['thankful', 'appreciation', 'blessed', 'grateful'],
@@ -55,7 +55,7 @@ function evaluateSubjectiveAnswer(answer, criteria, weight) {
     }
   });
 
-  // Calculate base criteria score (improved partial scoring)
+  // Calculate base criteria score
   if (matchedCriteria.length === criteria.length) {
     criteriaScore = 1.0; // Full score for all criteria
   } else if (matchedCriteria.length > 0) {
@@ -358,5 +358,4 @@ export function getSectionRecommendations(sectionScores) {
   return recommendations;
 }
 
-// Export the main calculation function as default
 export default calculateScore;

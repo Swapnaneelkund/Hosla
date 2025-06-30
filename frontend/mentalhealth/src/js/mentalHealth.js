@@ -419,7 +419,7 @@ function sendData(data) {
     });
 }
 
-// Add this function to reset the assessment state
+// function to reset the assessment state
 function resetAssessment() {
   // Reset state variables
   questions = [];
@@ -447,7 +447,6 @@ function resetAssessment() {
   // Hide any messages
   if (successMessage) successMessage.classList.add("hidden");
   if (errorMessage) errorMessage.classList.add("hidden");
-  // Re-attach nextBtn event listener
   setTimeout(() => {
     const newNextBtn = document.getElementById("nextBtn");
     if (newNextBtn) {
