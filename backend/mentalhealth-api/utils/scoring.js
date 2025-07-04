@@ -33,7 +33,12 @@ function evaluateSubjectiveAnswer(answer, criteria, weight) {
     'growth': ['development', 'progress', 'evolution', 'improvement'],
     'love': ['affection', 'care', 'compassion', 'kindness'],
     'strength': ['power', 'resilience', 'fortitude', 'courage'],
-    'reflection': ['contemplation', 'meditation', 'thinking', 'pondering']
+    'reflection': ['contemplation', 'meditation', 'thinking', 'pondering'],
+    'cognitive': ['intellectual', 'mental', 'thinking', 'mind'],
+    'memory': ['recall', 'remembrance', 'recollection'],
+    'attention': ['focus', 'concentration', 'mindfulness'],
+    'awareness': ['understanding', 'insight', 'consciousness'],
+    'assessment': ['evaluation', 'check', 'review']
   };
 
   // Check each criterion
@@ -41,14 +46,17 @@ function evaluateSubjectiveAnswer(answer, criteria, weight) {
     const normalizedCriterion = criterion.toLowerCase();
     let found = false;
 
-    // Direct match
-    if (normalizedAnswer.includes(normalizedCriterion)) {
-      found = true;
-    } else {
-      // Check synonyms
-      const synonyms = synonymMap[normalizedCriterion] || [];
-      found = synonyms.some(synonym => normalizedAnswer.includes(synonym));
-    }
+    // Split criterion into words for more flexible matching
+    const criterionWords = normalizedCriterion.split(' ');
+
+    // Check if any word from the criterion (or its synonyms) is present in the answer
+    found = criterionWords.some(word => {
+      if (normalizedAnswer.includes(word)) {
+        return true;
+      }
+      const synonyms = synonymMap[word] || [];
+      return synonyms.some(synonym => normalizedAnswer.includes(synonym));
+    });
 
     if (found) {
       matchedCriteria.push(criterion);

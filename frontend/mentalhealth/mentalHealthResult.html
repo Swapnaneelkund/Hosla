@@ -116,19 +116,19 @@
       <!-- Action Buttons -->
       <div class="results-card">
         <div class="actions-section">
-          <button class="action-btn btn-primary" onclick="downloadPDF()">
+          <button id="downloadPdfBtn" class="action-btn btn-primary" onclick="downloadPDF()">
             <i class="fas fa-download"></i>
             Download PDF Report
           </button>
-          <button class="action-btn btn-secondary" onclick="emailResults()">
+          <button id="emailResultsBtn" class="action-btn btn-secondary" onclick="emailResults()">
             <i class="fas fa-envelope"></i>
             Email Results
           </button>
-          <button class="action-btn btn-tertiary" onclick="shareResults()">
+          <button id="shareResultsBtn" class="action-btn btn-tertiary" onclick="shareResults()">
             <i class="fas fa-share-alt"></i>
             Share with Provider
           </button>
-          <button class="action-btn btn-primary" onclick="retakeAssessment()">
+          <button id="retakeAssessmentBtn" class="action-btn btn-primary" onclick="retakeAssessment()">
             <i class="fas fa-redo"></i>
             Retake Assessment
           </button>
@@ -139,7 +139,7 @@
     <!-- Email Modal -->
     <div id="emailModal" class="modal">
       <div class="modal-content">
-        <span class="close" onclick="closeModal()">&times;</span>
+        <span id="closeModalSpanBtn" class="close" onclick="closeModal()">&times;</span>
         <h3 style="margin-bottom: 20px; color: #374151">Email Your Results</h3>
         <div style="margin-bottom: 20px">
           <label
@@ -192,7 +192,7 @@
         </div>
         <div style="display: flex; gap: 12px; justify-content: flex-end">
           <button
-            onclick="closeModal()"
+            id="cancelEmailBtn"
             style="
               padding: 12px 24px;
               background: #e2e8f0;
@@ -206,7 +206,7 @@
             Cancel
           </button>
           <button
-            onclick="sendEmail()"
+            id="sendEmailBtn"
             style="
               padding: 12px 24px;
               background: linear-gradient(135deg, #667eea, #764ba2);

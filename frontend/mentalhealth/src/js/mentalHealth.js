@@ -1,3 +1,5 @@
+const BASE_API_URL = "http://localhost:8000";
+
 const form = document.getElementById("userForm");
 const container = document.getElementById("form-container");
 const questionContainer = document.getElementById("questionContainer");
@@ -11,6 +13,7 @@ const errorMessage = document.getElementById("errorMessage");
 const languageSelect = document.getElementById("languageSelect");
 const progressFill = document.getElementById("progressFill");
 const progressText = document.getElementById("progressText");
+const loadingOverlay = document.getElementById("loadingOverlay");
 
 let questions = [];
 let currentIndex = 0;
@@ -64,7 +67,7 @@ const translations = {
     submit: "मूल्यांकन शुरू करें",
     language: "भाषा:",
     next: "आगे",
-    thankYou: "धन्यवाद! आपके उत्तर सबमिट किए जा रहे हैं...",
+    thankYou: "धन्यवाद! आपके उत्तर सबमिट किए जा रहे हैं... ",
     selectOption: "कृपया आगे बढ़ने से पहले एक विकल्प चुनें।",
     typeAnswer: "कृपया आगे बढ़ने से पहले उत्तर लिखें।",
     progress: (current, total) => `प्रश्न ${current} / ${total}`,
@@ -85,7 +88,7 @@ const translations = {
     submit: "মূল্যায়ন শুরু করুন",
     language: "ভাষা:",
     next: "পরবর্তী",
-    thankYou: "ধন্যবাদ! আপনার উত্তর জমা দেওয়া হচ্ছে...",
+    thankYou: "ধন্যবাদ! আপনার উত্তর জমা দেওয়া হচ্ছে... ",
     selectOption: "অনুগ্রহ করে একটি অপশন নির্বাচন করুন।",
     typeAnswer: "অনুগ্রহ করে উত্তর লিখুন।",
     progress: (current, total) => `প্রশ্ন ${current} / ${total}`,
@@ -133,7 +136,9 @@ if (languageSelect) {
 }
 if (form) {
   form.addEventListener("submit", function (e) {
+    console.log("Form submit event triggered.");
     e.preventDefault();
+    console.log("Default form submission prevented.");
     const formData = new FormData(form);
     userInfo.data = Object.fromEntries(formData);
     container.style.transform = "translateX(-100%)";
@@ -144,19 +149,43 @@ if (form) {
   });
 }
 
+function showLoading() {
+  loadingOverlay.classList.remove("hidden");
+}
+
+function hideLoading() {
+  loadingOverlay.classList.add("hidden");
+}
+
 // Replace getData to fetch questions from backend
 function getData() {
-  fetch("http://localhost:8000/api/mentalhealth/question")
-    .then((res) => res.json())
+  console.log("getData: Initiating fetch for questions...");
+  showLoading();
+  fetch(`${BASE_API_URL}/api/mentalhealth/questions`)
+    .then((res) => {
+      console.log("getData: Received response from backend.");
+      hideLoading();
+      if (!res.ok) {
+        return res.text().then((msg) => {
+          throw new Error(msg || `HTTP ${res.status}`);
+        });
+      }
+      return res.json();
+    })
     .then((result) => {
+      console.log("getData: Successfully parsed JSON result.", result);
       if (!result.success || !result.data) {
-        throw new Error("Failed to fetch questions from backend");
+        console.error("getData: Backend response indicates failure or missing data.", result);
+        throw new Error("Failed to fetch questions from backend: " + (result.message || "Unknown error"));
       }
       // Use backend questions
       questions = extractAllQuestions(result.data);
+      console.log("getData: Questions extracted.", questions);
       displayQuestions(questions, 0);
     })
     .catch((err) => {
+      console.error("getData: Fetch or processing error.", err);
+      hideLoading();
       questionContainer.innerHTML = `
         <div class="error-message" style="text-align: center; padding: 30px;">
           <i class="fas fa-exclamation-triangle" style="font-size: 48px; color: #ef4444; margin-bottom: 20px;"></i>
@@ -169,6 +198,7 @@ function getData() {
 }
 
 function displayQuestions(data, index = 0) {
+  console.log("displayQuestions: Function called.");
   container.style.display = "none";
   questionContainer.classList.remove("hidden");
   questions = data;
@@ -329,7 +359,7 @@ nextBtn.addEventListener("click", () => {
     type: q.type === "objective" ? "Objective" : "Subjective"
   };
   if (q.type === "subjective") {
-    answerObj.questionId = q.questionId || `Q${currentIndex + 1}`; // fallback if missing
+    answerObj.questionId = q.questionId || `Q${currentIndex + 1}`;
     answerObj.answer = selectedAnswer;
   } else {
     answerObj.questionIndex = typeof q.questionIndex === "number" ? q.questionIndex : currentIndex;
@@ -341,7 +371,8 @@ nextBtn.addEventListener("click", () => {
   currentIndex++;
   if (currentIndex < questions.length) {
     showQuestion(currentIndex);
-  } else {
+  }
+  else {
     questionContainer.innerHTML = `
             <div class="success-message">
                 <i class="fas fa-check-circle" style="margin-right: 10px; font-size: 20px;"></i>
@@ -353,6 +384,7 @@ nextBtn.addEventListener("click", () => {
 });
 
 function sendData(data) {
+  showLoading();
   // --- Prepare payload for backend ---
   const formData = data.data || {};
   const userId = formData.email || formData.name || `user_${Date.now()}`;
@@ -368,7 +400,7 @@ function sendData(data) {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 10000);
 
-  fetch("http://localhost:8000/api/mentalhealth/", {
+  fetch(`${BASE_API_URL}/api/mentalhealth/`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -377,6 +409,7 @@ function sendData(data) {
     signal: controller.signal,
   })
     .then((response) => {
+      hideLoading();
       clearTimeout(timeoutId);
       if (!response.ok) {
         return response.text().then((msg) => {
@@ -396,6 +429,7 @@ function sendData(data) {
       // --- End redirect ---
     })
     .catch((err) => {
+      hideLoading();
       clearTimeout(timeoutId);
       console.error("Error:", err.message);
 
@@ -442,7 +476,9 @@ function resetAssessment() {
     <p id="questionText" class="question-text"></p>
     <div id="optionsContainer" class="options-container"></div>
     <p id="errorMsg" class="error-message hidden"></p>
-    <button id="nextBtn" class="next-btn">Next<i class="fas fa-arrow-right"></i></button>
+    <button onclick="resetAssessment()" style="background: linear-gradient(135deg, #667eea, #764ba2); color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-weight: 600;">
+                    Try Again
+                </button>
   `;
   // Hide any messages
   if (successMessage) successMessage.classList.add("hidden");

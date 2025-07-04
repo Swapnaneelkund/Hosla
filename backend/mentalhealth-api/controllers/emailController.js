@@ -1,11 +1,14 @@
 import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
+import { apiResponce } from '../utils/ApiResponseHandler.js';
+
 dotenv.config();
 
 export const sendResultsEmail = async (req, res) => {
     const { email, message, results } = req.body;
     if (!email || !results) {
-        return res.status(400).json({ error: 'Missing email or results' });
+        const response = new apiResponce(400, null, 'Missing email or results');
+        return res.status(response.statusCode).json(response);
     }
 
     const transporter = nodemailer.createTransport({
@@ -25,8 +28,10 @@ export const sendResultsEmail = async (req, res) => {
 
     try {
         await transporter.sendMail(mailOptions);
-        res.json({ success: true });
+        const response = new apiResponce(200, { success: true }, 'Email sent successfully');
+        res.json(response);
     } catch (err) {
-        res.status(500).json({ error: 'Failed to send email' });
+        const response = new apiResponce(500, null, 'Failed to send email');
+        res.status(response.statusCode).json(response);
     }
 };

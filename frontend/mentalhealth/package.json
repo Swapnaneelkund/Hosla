@@ -4,14 +4,17 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build:css": "tailwindcss -i ./src/css/input.css -o ./src/css/output.css --minify"
+    "build:css": "node node_modules/@tailwindcss/cli/dist/index.mjs -i ./src/css/input.css -o ./src/css/output.css --minify",
+    "build:js": "node node_modules/terser/bin/terser src/js/mentalHealth.js -o dist/mentalHealth.min.js && node node_modules/terser/bin/terser src/js/mentalHealthResult.js -o dist/mentalHealthResult.min.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@parcel/watcher": "^2.5.1",
     "@tailwindcss/cli": "^4.1.7",
-    "tailwindcss": "^4.1.7"
+    "tailwindcss": "^4.1.7",
+    "terser": "^5.31.0"
   }
 }

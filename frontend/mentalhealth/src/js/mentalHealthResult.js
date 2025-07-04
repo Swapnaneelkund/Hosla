@@ -825,8 +825,18 @@ window.retakeAssessment = retakeAssessment;
 window.closeModal = closeModal;
 window.sendEmail = sendEmail;
 
+
 document.addEventListener("DOMContentLoaded", function () {
     initializeResults();
+
+    // Attach event listeners to buttons
+    document.getElementById("downloadPdfBtn").addEventListener("click", downloadPDF);
+    document.getElementById("emailResultsBtn").addEventListener("click", emailResults);
+    document.getElementById("shareResultsBtn").addEventListener("click", shareResults);
+    document.getElementById("retakeAssessmentBtn").addEventListener("click", retakeAssessment);
+    document.getElementById("closeModalSpanBtn").addEventListener("click", closeModal);
+    document.getElementById("cancelEmailBtn").addEventListener("click", closeModal);
+    document.getElementById("sendEmailBtn").addEventListener("click", sendEmail);
 
     // Close modal when clicking outside of it
     window.addEventListener("click", function (event) {

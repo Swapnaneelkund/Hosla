@@ -258,16 +258,18 @@ export const getSectionQuestions = (req, res) => {
  * @param {Object} req - Express request object
  * @param {Object} res - Express response object
  */
-export const getQuestionnaireMetadata = (req, res) => {
+export const getQuestionnaireMetadata = async (req, res) => {
   try {
+    const questionsFromDb = await Question.find({});
     const metadata = {
-      totalSections: Object.keys(mentalAgeQuestionnaire).length,
+      totalSections: questionsFromDb.length,
       sections: {},
       totalQuestions: 0
     };
 
-    Object.keys(mentalAgeQuestionnaire).forEach(sectionName => {
-      const section = mentalAgeQuestionnaire[sectionName];
+    questionsFromDb.forEach(q => {
+      const sectionName = q.sectionName;
+      const section = q.data;
       const subjectiveCount = section.Subjective?.length || 0;
       const objectiveCount = section.Objective?.length || 0;
       const totalCount = subjectiveCount + objectiveCount;

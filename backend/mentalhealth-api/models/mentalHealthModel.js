@@ -6,7 +6,7 @@ const answerSchema = new mongoose.Schema({
 });
 
 const mentalHealthSchema = new mongoose.Schema({
-  username: { type: String, required: true },
+  username: { type: String, required: true, index: true },
   answers: {
     type: Map,
     of: [answerSchema]
