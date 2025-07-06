@@ -1,6 +1,7 @@
 // Sample data structure - replaced with actual data from backend
 const sampleResults = {
     userId: "user123",
+    userName: "User Name",
     assessment: {
         percentage: 78,
         mentalAgeCategory: "Good",
@@ -11,27 +12,62 @@ const sampleResults = {
                 score: 35,
                 maxScore: 40,
                 percentage: 87.5,
+                questionDetails: [
+                    { type: 'Subjective', score: 15, maxScore: 20 },
+                    { type: 'Objective', score: 20, maxScore: 20 }
+                ]
             },
             "Emotional Well-being": {
                 score: 32,
                 maxScore: 40,
                 percentage: 80,
+                questionDetails: [
+                    { type: 'Subjective', score: 12, maxScore: 15 },
+                    { type: 'Objective', score: 20, maxScore: 25 }
+                ]
             },
             "Social Connections": {
                 score: 28,
                 maxScore: 40,
                 percentage: 70,
+                questionDetails: [
+                    { type: 'Subjective', score: 18, maxScore: 25 },
+                    { type: 'Objective', score: 10, maxScore: 15 }
+                ]
             },
             "Physical Health": {
                 score: 30,
                 maxScore: 40,
                 percentage: 75,
+                questionDetails: [
+                    { type: 'Subjective', score: 15, maxScore: 20 },
+                    { type: 'Objective', score: 15, maxScore: 20 }
+                ]
             },
             "Spiritual Growth": {
                 score: 31,
                 maxScore: 40,
                 percentage: 77.5,
+                questionDetails: [
+                    { type: 'Subjective', score: 21, maxScore: 25 },
+                    { type: 'Objective', score: 10, maxScore: 15 }
+                ]
+            }
+        },
+        // Add this new field to sample data
+        questionTypeBreakdown: {
+            subjective: {
+                score: 81,
+                maxScore: 105,
+                percentage: 77,
+                questionCount: 5
             },
+            objective: {
+                score: 75,
+                maxScore: 95,
+                percentage: 79,
+                questionCount: 5
+            }
         },
         sectionRecommendations: {
             "Cognitive Function": {
@@ -39,19 +75,18 @@ const sampleResults = {
                 recommendations: [
                     "Engage in daily brain exercises like puzzles or reading",
                     "Learn a new skill or hobby to stimulate neuroplasticity",
-                ],
+                ]
             },
             "Social Connections": {
                 priority: "medium",
                 recommendations: [
                     "Join community groups or clubs aligned with your interests",
                     "Schedule regular video calls with family members",
-                ],
-            },
-        },
+                ]
+            }
+        }
     },
-    message:
-        "Very good! You show strong mental well-being across most areas. Focus on the specific areas highlighted in your section breakdown to achieve even greater balance and fulfillment.",
+    message: "Very good! You show strong mental well-being across most areas. Focus on the specific areas highlighted in your section breakdown to achieve even greater balance and fulfillment."
 };
 
 let resultsData = null;
@@ -308,51 +343,259 @@ function displayResources(score) {
     });
 }
 
-function createCharts() {
-    createScoreChart();
-    createDetailedChart();
+// First, let's modify the data structure to calculate subjective and objective scores
+function calculateSubjectiveObjectiveScores(sectionBreakdown) {
+    let totalSubjectiveScore = 0;
+    let maxSubjectiveScore = 0;
+    let totalObjectiveScore = 0;
+    let maxObjectiveScore = 0;
+    
+    // Iterate through each section to sum up subjective and objective scores
+    Object.entries(sectionBreakdown).forEach(([sectionName, sectionData]) => {
+        if (sectionData.questionDetails) {
+            sectionData.questionDetails.forEach(question => {
+                if (question.type === 'Subjective') {
+                    totalSubjectiveScore += question.score || 0;
+                    maxSubjectiveScore += question.maxScore || 0;
+                } else if (question.type === 'Objective') {
+                    totalObjectiveScore += question.score || 0;
+                    maxObjectiveScore += question.maxScore || 0;
+                }
+            });
+        }
+    });
+    
+    const subjectivePercentage = maxSubjectiveScore > 0 ? Math.round((totalSubjectiveScore / maxSubjectiveScore) * 100) : 0;
+    const objectivePercentage = maxObjectiveScore > 0 ? Math.round((totalObjectiveScore / maxObjectiveScore) * 100) : 0;
+    
+    return {
+        subjective: {
+            score: totalSubjectiveScore,
+            maxScore: maxSubjectiveScore,
+            percentage: subjectivePercentage
+        },
+        objective: {
+            score: totalObjectiveScore,
+            maxScore: maxObjectiveScore,
+            percentage: objectivePercentage
+        }
+    };
 }
 
+// Enhanced chart creation function
 function createScoreChart() {
     try {
         const ctx = document.getElementById("scoreChart").getContext("2d");
-        const percentage = resultsData.assessment.percentage;
+        const overallPercentage = resultsData.assessment.percentage;
+        
+        // Calculate subjective and objective scores
+        let subjectivePercentage = 0;
+        let objectivePercentage = 0;
+        
+        // Check if we have the breakdown data from backend
+        if (resultsData.assessment.questionTypeBreakdown) {
+            subjectivePercentage = resultsData.assessment.questionTypeBreakdown.subjective.percentage;
+            objectivePercentage = resultsData.assessment.questionTypeBreakdown.objective.percentage;
+        } else {
+            // Fallback calculation from section breakdown
+            const scores = calculateSubjectiveObjectiveScores(resultsData.assessment.sectionBreakdown);
+            subjectivePercentage = scores.subjective.percentage;
+            objectivePercentage = scores.objective.percentage;
+        }
+        
+        // Destroy existing chart if it exists
+        if (scoreChart) {
+            scoreChart.destroy();
+        }
+        
+        // Chart configuration
         scoreChart = new Chart(ctx, {
             type: "doughnut",
             data: {
-                datasets: [
-                    {
-                        data: [percentage, 100 - percentage],
-                        backgroundColor: [
-                            "rgba(102, 126, 234, 0.8)",
-                            "rgba(226, 232, 240, 0.3)",
-                        ],
-                        borderColor: [
-                            "rgba(102, 126, 234, 1)",
-                            "rgba(226, 232, 240, 0.5)",
-                        ],
-                        borderWidth: 2,
-                        cutout: "75%",
-                    },
-                ],
+                labels: ["Overall Score", "Subjective Score", "Objective Score"],
+                datasets: [{
+                    data: [overallPercentage, subjectivePercentage, objectivePercentage],
+                    backgroundColor: [
+                        "rgba(102, 126, 234, 0.8)",  // Blue for overall
+                        "rgba(255, 193, 7, 0.8)",    // Yellow for subjective
+                        "rgba(40, 167, 69, 0.8)"     // Green for objective
+                    ],
+                    borderColor: [
+                        "rgba(102, 126, 234, 1)",
+                        "rgba(255, 193, 7, 1)",
+                        "rgba(40, 167, 69, 1)"
+                    ],
+                    borderWidth: 3,
+                    cutout: "70%",
+                    hoverBorderWidth: 4,
+                    hoverOffset: 8
+                }]
             },
             options: {
                 responsive: false,
                 maintainAspectRatio: false,
                 plugins: {
                     legend: {
-                        display: false,
+                        display: false
                     },
                     tooltip: {
-                        enabled: false,
-                    },
+                        enabled: false
+                    }
                 },
-            },
+                onHover: (event, activeElements) => {
+                    // Change cursor on hover
+                    event.native.target.style.cursor = activeElements.length > 0 ? 'pointer' : 'default';
+                    
+                    // Update the center display based on hover
+                    const scoreNumberElement = document.getElementById("scoreNumber");
+                    const scoreLabelElement = document.querySelector(".score-label");
+                    
+                    if (activeElements.length > 0) {
+                        const index = activeElements[0].index;
+                        const labels = ["Overall Score", "Subjective Score", "Objective Score"];
+                        const values = [overallPercentage, subjectivePercentage, objectivePercentage];
+                        
+                        scoreNumberElement.textContent = `${values[index]}%`;
+                        scoreLabelElement.textContent = labels[index];
+                        
+                        // Update color based on active segment
+                        const colors = ["#667eea", "#ffc107", "#28a745"];
+                        scoreNumberElement.style.color = colors[index];
+                        scoreLabelElement.style.color = colors[index];
+                    } else {
+                        // Reset to default (overall)
+                        scoreNumberElement.textContent = `${overallPercentage}%`;
+                        scoreLabelElement.textContent = "Overall Score";
+                        scoreNumberElement.style.color = "#667eea";
+                        scoreLabelElement.style.color = "#64748b";
+                    }
+                }
+            }
         });
-    } catch (e) {
-        document.getElementById("scoreNumber").textContent = "--";
+        
+        // Add custom legend
+        createCustomLegend(overallPercentage, subjectivePercentage, objectivePercentage);
+        
+    } catch (error) {
+        console.error("Error creating enhanced score chart:", error);
+        document.getElementById("scoreNumber").textContent = resultsData.assessment.percentage + "%";
     }
 }
+
+// Add this new function to create custom legend
+function createCustomLegend(overallPercentage, subjectivePercentage, objectivePercentage) {
+    const legendContainer = document.createElement("div");
+    legendContainer.className = "chart-legend";
+    legendContainer.style.cssText = `
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+        margin-top: 20px;
+        flex-wrap: wrap;
+    `;
+    
+    const legendItems = [
+        { label: "Overall", percentage: overallPercentage, color: "#667eea" },
+        { label: "Subjective", percentage: subjectivePercentage, color: "#ffc107" },
+        { label: "Objective", percentage: objectivePercentage, color: "#28a745" }
+    ];
+    
+    legendItems.forEach(item => {
+        const legendItem = document.createElement("div");
+        legendItem.style.cssText = `
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 8px;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        `;
+        
+        legendItem.innerHTML = `
+            <div style="
+                width: 12px;
+                height: 12px;
+                background: ${item.color};
+                border-radius: 50%;
+            "></div>
+            <span style="
+                font-size: 12px;
+                font-weight: 600;
+                color: #374151;
+            ">${item.label}: ${item.percentage}%</span>
+        `;
+        
+        // Add hover effect
+        legendItem.addEventListener('mouseenter', () => {
+            legendItem.style.backgroundColor = 'rgba(255, 255, 255, 1)';
+            legendItem.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.1)';
+        });
+        
+        legendItem.addEventListener('mouseleave', () => {
+            legendItem.style.backgroundColor = 'rgba(255, 255, 255, 0.8)';
+            legendItem.style.boxShadow = 'none';
+        });
+        
+        legendContainer.appendChild(legendItem);
+    });
+    
+    // Insert legend after the chart container
+    const chartContainer = document.querySelector(".score-circle");
+    if (chartContainer) {
+        // Remove existing legend if it exists
+        const existingLegend = chartContainer.parentNode.querySelector(".chart-legend");
+        if (existingLegend) {
+            existingLegend.remove();
+        }
+        
+        chartContainer.parentNode.insertBefore(legendContainer, chartContainer.nextSibling);
+    }
+}
+
+// Update the main initialization function
+function initializeResults() {
+    const stored = localStorage.getItem("mh_assessment_result");
+    console.log("[MH] Raw localStorage value:", stored);
+    
+    let error = null;
+    if (stored) {
+        try {
+            resultsData = JSON.parse(stored);
+            console.log("[MH] Parsed localStorage JSON:", resultsData);
+            
+            if (!resultsData || !resultsData.assessment || typeof resultsData.assessment.percentage !== "number") {
+                throw new Error("Invalid assessment data structure");
+            }
+            
+            localStorage.removeItem("mh_assessment_result");
+        } catch (e) {
+            error = e;
+            resultsData = null;
+        }
+    }
+    
+    if (!resultsData) {
+        resultsData = sampleResults;
+        showNoResultsWarning(error);
+    }
+    
+    displayResults(resultsData);
+    createCharts();
+    animateElements();
+}
+
+// Update the createCharts function to use the new enhanced chart
+function createCharts() {
+    createScoreChart(); // Use the enhanced version
+    createDetailedChart();
+}
+
+// Export functions for use in the main file
+window.createEnhancedScoreChart = createScoreChart;
+window.calculateSubjectiveObjectiveScores = calculateSubjectiveObjectiveScores;
 
 function createDetailedChart() {
     try {

@@ -1,6 +1,7 @@
 import calculateScore, { getSectionRecommendations } from "../utils/scoring.js";
 import mentalAgeQuestionnaire from "../data/question.js";
 import { apiResponce } from "../utils/ApiResponseHandler.js";
+import AssessmentResult from "../models/assessmentResultModel.js";
 
 /**
  * Predict mental health based on user answers
@@ -23,7 +24,7 @@ export const predictMentalHealth = async (req, res) => {
     }
 
     // Calculate the mental health score
-    const scoringResult = calculateScore(userAnswers, mentalAgeQuestionnaire);
+    const scoringResult = await calculateScore(userAnswers, mentalAgeQuestionnaire);
     // Get detailed section recommendations
     const sectionRecommendationsRaw = getSectionRecommendations(scoringResult.sectionBreakdown);
 
@@ -44,7 +45,8 @@ export const predictMentalHealth = async (req, res) => {
       sectionBreakdownObj[displayName] = {
         score: section.rawScore,
         maxScore: section.maxRawScore,
-        percentage: section.percentage
+        percentage: section.percentage,
+        questionDetails: section.questionDetails
       };
     });
 
@@ -74,10 +76,33 @@ export const predictMentalHealth = async (req, res) => {
       assessment: {
         ...scoringResult,
         sectionBreakdown: sectionBreakdownObj,
-        sectionRecommendations: sectionRecommendationsObj
+        sectionRecommendations: sectionRecommendationsObj,
+        // Add the question type breakdown to the response
+        questionTypeBreakdown: scoringResult.questionTypeBreakdown || {
+            subjective: { score: 0, maxScore: 0, percentage: 0, questionCount: 0 },
+            objective: { score: 0, maxScore: 0, percentage: 0, questionCount: 0 }
+        }
       },
       message: generatePersonalizedMessage(scoringResult.percentage, scoringResult.mentalAgeCategory)
     };
+
+    // Save the assessment result to the database
+    const newAssessment = new AssessmentResult({
+      userId: userId || null,
+      userName: userName || null,
+      finalScore: scoringResult.finalScore,
+      maxPossibleScore: scoringResult.maxPossibleScore,
+      percentage: scoringResult.percentage,
+      mentalAgeCategory: scoringResult.mentalAgeCategory,
+      recommendations: scoringResult.recommendations,
+      sectionBreakdown: scoringResult.sectionBreakdown, // This already contains questionDetails
+      timestamp: scoringResult.timestamp,
+      totalQuestions: scoringResult.totalQuestions,
+      completionRate: scoringResult.completionRate,
+    });
+
+    await newAssessment.save();
+    console.log("Assessment result saved to database.");
 
     console.log(`Mental Health Assessment completed - Score: ${scoringResult.percentage}%, Category: ${scoringResult.mentalAgeCategory}`);
     

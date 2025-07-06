@@ -811,3 +811,193 @@ body::before {
 .modal.show {
     display: block;
 }
+
+/* Enhanced Chart Styles */
+.score-overview {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 30px;
+    margin-bottom: 40px;
+    align-items: center;
+}
+
+.score-circle {
+    position: relative;
+    width: 220px;
+    height: 220px;
+    margin: 0 auto;
+    padding: 10px;
+}
+
+.score-display {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    z-index: 10;
+    pointer-events: none;
+}
+
+.score-number {
+    font-size: 48px;
+    font-weight: 700;
+    color: #667eea;
+    margin-bottom: 8px;
+    transition: color 0.3s ease;
+}
+
+.score-label {
+    font-size: 14px;
+    color: #64748b;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    transition: color 0.3s ease;
+}
+
+/* Chart Legend Styles */
+.chart-legend {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-top: 20px;
+    flex-wrap: wrap;
+}
+
+.chart-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: 8px;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    backdrop-filter: blur(5px);
+}
+
+.chart-legend-item:hover {
+    background: rgba(255, 255, 255, 1);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+}
+
+.chart-legend-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.chart-legend-text {
+    font-size: 12px;
+    font-weight: 600;
+    color: #374151;
+}
+
+/* Enhanced Chart Container */
+.chart-container {
+    background: rgb(248 250 252/0.8);
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 30px;
+    height: 320px;
+    max-height: 400px;
+    overflow: auto;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.chart-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+#scoreChart {
+    cursor: pointer;
+}
+
+#detailedChart {
+    width: 100% !important;
+    height: 250px !important;
+    max-height: 250px !important;
+    display: block;
+    margin: 0 auto;
+}
+
+/* Interactive hover effects */
+.score-circle:hover .score-number {
+    transform: scale(1.05);
+}
+
+.score-circle:hover .score-label {
+    transform: scale(1.05);
+}
+
+/* Responsive design */
+ @media (max-width: 768px) {
+    .score-overview {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+    
+    .score-circle {
+        width: 180px;
+        height: 180px;
+    }
+    
+    .score-number {
+        font-size: 36px;
+    }
+    
+    .chart-legend {
+        gap: 10px;
+    }
+    
+    .chart-legend-item {
+        padding: 6px 10px;
+    }
+    
+    .chart-legend-text {
+        font-size: 11px;
+    }
+}
+
+/* Animation for chart appearance */
+ @keyframes chartFadeIn {
+    from {
+        opacity: 0;
+        transform: scale(0.8);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.score-circle {
+    animation: chartFadeIn 0.6s ease-out;
+}
+
+/* Tooltip-like effect for additional information */
+.chart-info-tooltip {
+    position: absolute;
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    pointer-events: none;
+    z-index: 1000;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.chart-info-tooltip.show {
+    opacity: 1;
+}

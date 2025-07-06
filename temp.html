@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mental Health Assessment Results</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        .results-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.15);
+            overflow: hidden;
+            animation: fadeInUp 0.8s ease-out;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Header Section */
+        .results-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px 30px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .results-header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            animation: rotate 20s linear infinite;
+        }
+
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .results-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 12px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .results-subtitle {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            font-weight: 400;
+            position: relative;
+            z-index: 2;
+        }
+
+        .completion-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 12px 24px;
+            border-radius: 50px;
+            margin-top: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            position: relative;
+            z-index: 2;
+        }
+
+        .completion-badge i {
+            font-size: 1.1rem;
+            color: #10b981;
+        }
+
+        /* Participant Info */
+        .participant-section {
+            padding: 30px;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
+            border-bottom: 1px solid rgba(102, 126, 234, 0.1);
+        }
+
+        .participant-card {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            background: white;
+            padding: 25px;
+            border-radius: 16px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+            border: 1px solid rgba(102, 126, 234, 0.1);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .participant-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+        }
+
+        .participant-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 35px rgba(0, 0, 0, 0.12);
+        }
+
+        .participant-avatar {
+            width: 70px;
+            height: 70px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.8rem;
+            position: relative;
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .participant-avatar::after {
+            content: '';
+            position: absolute;
+            inset: 3px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 50%;
+            z-index: -1;
+        }
+
+        .participant-details {
+            flex: 1;
+        }
+
+        .participant-label {
+            font-size: 0.85rem;
+            color: #64748b;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+
+        .participant-name {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 8px;
+        }
+
+        .assessment-date {
+            font-size: 0.9rem;
+            color: #64748b;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(16, 185, 129, 0.1);
+            color: #10b981;
+            padding: 12px 20px;
+            border-radius: 50px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            border: 2px solid rgba(16, 185, 129, 0.2);
+        }
+
+        .status-indicator i {
+            font-size: 1rem;
+        }
+
+        /* Score Overview Section */
+        .score-section {
+            padding: 40px 30px;
+            background: white;
+        }
+
+        .score-overview {
+            display: grid;
+            grid-template-columns: 1fr 1.5fr;
+            gap: 40px;
+            align-items: center;
+        }
+
+        .score-visualization {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .score-circle {
+            position: relative;
+            width: 240px;
+            height: 240px;
+            margin-bottom: 20px;
+        }
+
+        .score-display {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            z-index: 10;
+        }
+
+        .score-number {
+            font-size: 3rem;
+            font-weight: 800;
+            color: #667eea;
+            margin-bottom: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .score-label {
+            font-size: 0.9rem;
+            color: #64748b;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+        }
+
+        .score-metrics {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .metric-item {
+            background: rgba(102, 126, 234, 0.1);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #667eea;
+            border: 1px solid rgba(102, 126, 234, 0.2);
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .metric-item:hover {
+            background: rgba(102, 126, 234, 0.2);
+            transform: translateY(-1px);
+        }
+
+        .metric-item.active {
+            background: #667eea;
+            color: white;
+        }
+
+        /* Score Details */
+        .score-details {
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+        }
+
+        .risk-assessment {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
+            padding: 25px;
+            border-radius: 16px;
+            border: 1px solid rgba(102, 126, 234, 0.1);
+        }
+
+        .risk-level {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 20px;
+            border-radius: 25px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 15px;
+        }
+
+        .risk-excellent {
+            background: rgba(16, 185, 129, 0.1);
+            color: #10b981;
+            border: 2px solid rgba(16, 185, 129, 0.2);
+        }
+
+        .risk-good {
+            background: rgba(34, 197, 94, 0.1);
+            color: #22c55e;
+            border: 2px solid rgba(34, 197, 94, 0.2);
+        }
+
+        .risk-moderate {
+            background: rgba(251, 191, 36, 0.1);
+            color: #fbbf24;
+            border: 2px solid rgba(251, 191, 36, 0.2);
+        }
+
+        .risk-attention {
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+            border: 2px solid rgba(239, 68, 68, 0.2);
+        }
+
+        .score-message {
+            font-size: 1.1rem;
+            line-height: 1.7;
+            color: #374151;
+            font-weight: 500;
+        }
+
+        .score-breakdown {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid rgba(102, 126, 234, 0.1);
+        }
+
+        .breakdown-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .breakdown-items {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .breakdown-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(102, 126, 234, 0.1);
+        }
+
+        .breakdown-item:last-child {
+            border-bottom: none;
+        }
+
+        .breakdown-label {
+            font-size: 0.9rem;
+            color: #64748b;
+            font-weight: 500;
+        }
+
+        .breakdown-score {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #667eea;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .results-container {
+                margin: 10px;
+                border-radius: 16px;
+            }
+
+            .results-header {
+                padding: 30px 20px;
+            }
+
+            .results-title {
+                font-size: 2rem;
+            }
+
+            .participant-section {
+                padding: 20px;
+            }
+
+            .participant-card {
+                flex-direction: column;
+                text-align: center;
+                gap: 15px;
+            }
+
+            .participant-details {
+                text-align: center;
+            }
+
+            .score-section {
+                padding: 30px 20px;
+            }
+
+            .score-overview {
+                grid-template-columns: 1fr;
+                gap: 30px;
+                text-align: center;
+            }
+
+            .score-circle {
+                width: 200px;
+                height: 200px;
+            }
+
+            .score-number {
+                font-size: 2.5rem;
+            }
+
+            .score-details {
+                gap: 20px;
+            }
+
+            .risk-assessment {
+                padding: 20px;
+            }
+        }
+
+        /* Animation for chart */
+        @keyframes chartGlow {
+            0%, 100% { filter: drop-shadow(0 0 8px rgba(102, 126, 234, 0.3)); }
+            50% { filter: drop-shadow(0 0 16px rgba(102, 126, 234, 0.5)); }
+        }
+
+        .score-circle:hover {
+            animation: chartGlow 2s ease-in-out infinite;
+        }
+    </style>
+</head>
+<body>
+    <div class="results-container">
+        <!-- Enhanced Header -->
+        <div class="results-header">
+            <h1 class="results-title">Mental Health Assessment Results</h1>
+            <p class="results-subtitle">Your comprehensive wellbeing analysis</p>
+            <div class="completion-badge">
+                <i class="fas fa-check-circle"></i>
+                <span>Assessment Complete</span>
+            </div>
+        </div>
+
+        <!-- Participant Information -->
+        <div class="participant-section">
+            <div class="participant-card" id="participantInfo">
+                <div class="participant-avatar">
+                    <i class="fas fa-user"></i>
+                </div>
+                <div class="participant-details">
+                    <div class="participant-label">Assessment for</div>
+                    <div class="participant-name" id="participantName">Sujal Thakkar</div>
+                    <div class="assessment-date">
+                        <i class="fas fa-calendar"></i>
+                        <span id="timestamp">Sunday, July 06, 2025 at 10:30 AM</span>
+                    </div>
+                </div>
+                <div class="status-indicator">
+                    <i class="fas fa-shield-check"></i>
+                    <span>Verified</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Score Overview -->
+        <div class="score-section">
+            <div class="score-overview">
+                <div class="score-visualization">
+                    <div class="score-circle">
+                        <canvas id="scoreChart" width="240" height="240"></canvas>
+                        <div class="score-display">
+                            <div class="score-number" id="scoreNumber">78</div>
+                            <div class="score-label" id="scoreLabel">Overall Score</div>
+                        </div>
+                    </div>
+                    <div class="score-metrics">
+                        <div class="metric-item active" data-metric="overall">Overall</div>
+                        <div class="metric-item" data-metric="subjective">Subjective</div>
+                        <div class="metric-item" data-metric="objective">Objective</div>
+                    </div>
+                </div>
+
+                <div class="score-details">
+                    <div class="risk-assessment">
+                        <div class="risk-level risk-good" id="riskLevel">
+                            <i class="fas fa-thumbs-up"></i>
+                            <span>Good</span>
+                        </div>
+                        <p class="score-message" id="scoreMessage">
+                            Very good! You show strong mental well-being across most areas. Your assessment indicates a healthy balance between emotional regulation and cognitive function.
+                        </p>
+                    </div>
+
+                    <div class="score-breakdown">
+                        <div class="breakdown-title">
+                            <i class="fas fa-chart-bar"></i>
+                            Score Breakdown
+                        </div>
+                        <div class="breakdown-items">
+                            <div class="breakdown-item">
+                                <span class="breakdown-label">Subjective Assessment</span>
+                                <span class="breakdown-score" id="subjectiveScore">77%</span>
+                            </div>
+                            <div class="breakdown-item">
+                                <span class="breakdown-label">Objective Assessment</span>
+                                <span class="breakdown-score" id="objectiveScore">79%</span>
+                            </div>
+                            <div class="breakdown-item">
+                                <span class="breakdown-label">Total Score</span>
+                                <span class="breakdown-score" id="totalScore">156/200</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Sample data - replace with your actual data
+        const sampleResults = {
+            userId: "user123",
+            userName: "Sujal Thakkar",
+            assessment: {
+                percentage: 78,
+                totalScore: 156,
+                maxScore: 200,
+                sectionBreakdown: {
+                    "Cognitive Function": {
+                        questionDetails: [
+                            { type: 'Subjective', score: 15, maxScore: 20 },
+                            { type: 'Objective', score: 20, maxScore: 20 }
+                        ]
+                    },
+                    "Emotional Well-being": {
+                        questionDetails: [
+                            { type: 'Subjective', score: 12, maxScore: 15 },
+                            { type: 'Objective', score: 20, maxScore: 25 }
+                        ]
+                    }
+                },
+                questionTypeBreakdown: {
+                    subjective: { percentage: 77 },
+                    objective: { percentage: 79 }
+                }
+            },
+            message: "Very good! You show strong mental well-being across most areas. Your assessment indicates a healthy balance between emotional regulation and cognitive function."
+        };
+
+        let resultsData = null;
+        let scoreChart = null;
+        let currentMetric = 'overall';
+
+        function initializeResults() {
+            // Try to get data from localStorage, fallback to sample data
+            const stored = localStorage.getItem("mh_assessment_result");
+            if (stored) {
+                try {
+                    resultsData = JSON.parse(stored);
+                } catch (e) {
+                    resultsData = sampleResults;
+                }
+            } else {
+                resultsData = sampleResults;
+            }
+
+            displayResults(resultsData);
+            createScoreChart();
+            setupMetricSwitcher();
+        }
+
+        function displayResults(data) {
+            const assessment = data.assessment;
+            
+            // Update timestamp
+            document.getElementById("timestamp").textContent = 
+                new Date().toLocaleDateString("en-US", {
+                    weekday: "long",
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit"
+                });
+
+            // Update score display
+            document.getElementById("scoreNumber").textContent = `${assessment.percentage}`;
+            document.getElementById("subjectiveScore").textContent = `${assessment.questionTypeBreakdown.subjective.percentage}%`;
+            document.getElementById("objectiveScore").textContent = `${assessment.questionTypeBreakdown.objective.percentage}%`;
+            document.getElementById("totalScore").textContent = `${assessment.totalScore}/${assessment.maxScore}`;
+
+            // Update risk level
+            const riskLevel = getRiskLevel(assessment.percentage);
+            const riskElement = document.getElementById("riskLevel");
+            riskElement.innerHTML = `<i class="fas ${riskLevel.icon}"></i><span>${riskLevel.text}</span>`;
+            riskElement.className = `risk-level ${riskLevel.class}`;
+
+            // Update message
+            document.getElementById("scoreMessage").textContent = data.message;
+
+            // Update participant info
+            displayParticipantInfo(data);
+        }
+
+        function getRiskLevel(percentage) {
+            if (percentage >= 85) return { text: "Excellent", class: "risk-excellent", icon: "fa-star" };
+            if (percentage >= 70) return { text: "Good", class: "risk-good", icon: "fa-thumbs-up" };
+            if (percentage >= 55) return { text: "Moderate", class: "risk-moderate", icon: "fa-exclamation-triangle" };
+            return { text: "Needs Attention", class: "risk-attention", icon: "fa-exclamation-circle" };
+        }
+
+        function displayParticipantInfo(data) {
+            const participantName = data.userName;
+            const nameElement = document.getElementById("participantName");
+            if (nameElement && participantName) {
+                nameElement.textContent = participantName;
+            }
+        }
+
+        function createScoreChart() {
+            const ctx = document.getElementById("scoreChart").getContext("2d");
+            const overallPercentage = resultsData.assessment.percentage;
+            const subjectivePercentage = resultsData.assessment.questionTypeBreakdown.subjective.percentage;
+            const objectivePercentage = resultsData.assessment.questionTypeBreakdown.objective.percentage;
+
+            if (scoreChart) scoreChart.destroy();
+
+            scoreChart = new Chart(ctx, {
+                type: "doughnut",
+                data: {
+                    labels: ["Overall Score", "Subjective Score", "Objective Score"],
+                    datasets: [{
+                        data: [overallPercentage, subjectivePercentage, objectivePercentage],
+                        backgroundColor: [
+                            "rgba(102, 126, 234, 0.8)",
+                            "rgba(255, 193, 7, 0.8)",
+                            "rgba(40, 167, 69, 0.8)"
+                        ],
+                        borderColor: [
+                            "#667eea",
+                            "#ffc107",
+                            "#28a745"
+                        ],
+                        borderWidth: 3,
+                        cutout: "70%"
+                    }]
+                },
+                options: {
+                    responsive: false,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { enabled: false }
+                    },
+                    onHover: (event, activeElements) => {
+                        const scoreNumEl = document.getElementById("scoreNumber");
+                        const scoreLabelEl = document.getElementById("scoreLabel");
+                        
+                        if (activeElements.length > 0) {
+                            const index = activeElements[0].index;
+                            const labels = ["Overall Score", "Subjective Score", "Objective Score"];
+                            const values = [overallPercentage, subjectivePercentage, objectivePercentage];
+                            const colors = ["#667eea", "#ffc107", "#28a745"];
+                            
+                            scoreNumEl.textContent = values[index];
+                            scoreLabelEl.textContent = labels[index];
+                            scoreNumEl.style.color = colors[index];
+                            scoreLabelEl.style.color = colors[index];
+                        } else {
+                            updateScoreDisplay(currentMetric);
+                        }
+                    }
+                }
+            });
+        }
+
+        function setupMetricSwitcher() {
+            const metricItems = document.querySelectorAll('.metric-item');
+            metricItems.forEach(item => {
+                item.addEventListener('click', () => {
+                    // Remove active class from all items
+                    metricItems.forEach(i => i.classList.remove('active'));
+                    // Add active class to clicked item
+                    item.classList.add('active');
+                    
+                    const metric = item.getAttribute('data-metric');
+                    currentMetric = metric;
+                    updateScoreDisplay(metric);
+                });
+            });
+        }
+
+        function updateScoreDisplay(metric) {
+            const scoreNumEl = document.getElementById("scoreNumber");
+            const scoreLabelEl = document.getElementById("scoreLabel");
+            
+            const overallPercentage = resultsData.assessment.percentage;
+            const subjectivePercentage = resultsData.assessment.questionTypeBreakdown.subjective.percentage;
+            const objectivePercentage = resultsData.assessment.questionTypeBreakdown.objective.percentage;
+            
+            switch(metric) {
+                case 'overall':
+                    scoreNumEl.textContent = overallPercentage;
+                    scoreLabelEl.textContent = "Overall Score";
+                    scoreNumEl.style.color = "#667eea";
+                    scoreLabelEl.style.color = "#64748b";
+                    break;
+                case 'subjective':
+                    scoreNumEl.textContent = subjectivePercentage;
+                    scoreLabelEl.textContent = "Subjective Score";
+                    scoreNumEl.style.color = "#ffc107";
+                    scoreLabelEl.style.color = "#64748b";
+                    break;
+                case 'objective':
+                    scoreNumEl.textContent = objectivePercentage;
+                    scoreLabelEl.textContent = "Objective Score";
+                    scoreNumEl.style.color = "#28a745";
+                    scoreLabelEl.style.color = "#64748b";
+                    break;
+            }
+        }
+
+        // Initialize when DOM is loaded
+        document.addEventListener("DOMContentLoaded", initializeResults);
+    </script>
+</body>
+</html>

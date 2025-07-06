@@ -134,27 +134,40 @@ if (languageSelect) {
   });
   updateStaticText();
 }
-if (form) {
-  form.addEventListener("submit", function (e) {
-    console.log("Form submit event triggered.");
-    e.preventDefault();
-    console.log("Default form submission prevented.");
-    const formData = new FormData(form);
-    userInfo.data = Object.fromEntries(formData);
-    container.style.transform = "translateX(-100%)";
-    container.style.opacity = "0";
-    setTimeout(() => {
-      getData();
-    }, 300);
-  });
-}
+document.addEventListener("DOMContentLoaded", () => {
+  const savedUserInfo = localStorage.getItem("savedUserInfo");
+  const savedIndex = localStorage.getItem("savedIndex");
+
+  if (savedUserInfo && savedIndex) {
+    userInfo = JSON.parse(savedUserInfo);
+    currentIndex = parseInt(savedIndex, 10);
+    // Directly fetch questions and display the current one
+    getData();
+  } else {
+    // Only attach form listener if no saved data (initial load)
+    if (form) {
+      form.addEventListener("submit", function (e) {
+        console.log("Form submit event triggered.");
+        e.preventDefault();
+        console.log("Default form submission prevented.");
+        const formData = new FormData(form);
+        userInfo.data = Object.fromEntries(formData);
+        container.style.transform = "translateX(-100%)";
+        container.style.opacity = "0";
+        setTimeout(() => {
+          getData();
+        }, 300);
+      });
+    }
+  }
+});
 
 function showLoading() {
-  loadingOverlay.classList.remove("hidden");
+  loadingOverlay.classList.remove("loading-overlay--hidden");
 }
 
 function hideLoading() {
-  loadingOverlay.classList.add("hidden");
+  loadingOverlay.classList.add("loading-overlay--hidden");
 }
 
 // Replace getData to fetch questions from backend
@@ -181,7 +194,8 @@ function getData() {
       // Use backend questions
       questions = extractAllQuestions(result.data);
       console.log("getData: Questions extracted.", questions);
-      displayQuestions(questions, 0);
+      // Pass currentIndex to displayQuestions to resume progress
+      displayQuestions(questions, currentIndex);
     })
     .catch((err) => {
       console.error("getData: Fetch or processing error.", err);
@@ -368,6 +382,9 @@ nextBtn.addEventListener("click", () => {
   userInfo.responses.push(answerObj);
   // --- End mapping ---
 
+  localStorage.setItem("savedUserInfo", JSON.stringify(userInfo));
+  localStorage.setItem("savedIndex", currentIndex.toString());
+
   currentIndex++;
   if (currentIndex < questions.length) {
     showQuestion(currentIndex);
@@ -398,7 +415,7 @@ function sendData(data) {
   console.log("Submitting data:", payload);
 
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 10000);
+  const timeoutId = setTimeout(() => controller.abort(), 120000); // Increased timeout to 120 seconds
 
   fetch(`${BASE_API_URL}/api/mentalhealth/`, {
     method: "POST",
@@ -455,6 +472,10 @@ function sendData(data) {
 
 // function to reset the assessment state
 function resetAssessment() {
+  // Clear saved progress from localStorage
+  localStorage.removeItem("savedUserInfo");
+  localStorage.removeItem("savedIndex");
+
   // Reset state variables
   questions = [];
   currentIndex = 0;
