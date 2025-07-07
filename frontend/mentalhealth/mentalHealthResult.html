@@ -51,14 +51,16 @@
         <!-- Score Overview -->
         <div class="score-overview">
           <div class="score-circle">
-            <canvas id="scoreChart" width="200" height="200"></canvas>
+            <canvas id="scoreChart"></canvas>
             <div class="score-display">
               <div class="score-number" id="scoreNumber">--</div>
               <div class="score-label">Overall Score</div>
             </div>
           </div>
-          <div class="score-details">
-            <div class="risk-level" id="riskLevel">Loading...</div>
+          <div class="risk-assessment">
+            <div id="riskLevel">
+                <!-- JS will populate this -->
+            </div>
             <p class="score-message" id="scoreMessage">
               Loading your personalized assessment results...
             </p>

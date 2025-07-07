@@ -92,6 +92,7 @@ const sampleResults = {
 let resultsData = null;
 let scoreChart = null;
 let detailedChart = null;
+let activeScoreIndex = 0;
 
 // Initialize results when page loads
 function initializeResults() {
@@ -169,8 +170,8 @@ function displayResults(data) {
     // Update risk level
     const riskLevel = getRiskLevel(assessment.percentage);
     const riskElement = document.getElementById("riskLevel");
-    riskElement.textContent = riskLevel.text;
     riskElement.className = `risk-level ${riskLevel.class}`;
+    riskElement.innerHTML = `<i class="fas ${riskLevel.icon}"></i><span>${riskLevel.text}</span>`;
 
     // Update message
     document.getElementById("scoreMessage").textContent = data.message;
@@ -190,13 +191,13 @@ function displayResults(data) {
 
 function getRiskLevel(percentage) {
     if (percentage >= 85) {
-        return { text: "Excellent", class: "risk-excellent" };
+        return { text: "Excellent", class: "risk-excellent", icon: "fa-star" };
     } else if (percentage >= 70) {
-        return { text: "Good", class: "risk-good" };
+        return { text: "Good", class: "risk-good", icon: "fa-thumbs-up" };
     } else if (percentage >= 55) {
-        return { text: "Moderate", class: "risk-moderate" };
+        return { text: "Moderate", class: "risk-moderate", icon: "fa-balance-scale" };
     } else {
-        return { text: "Needs Attention", class: "risk-attention" };
+        return { text: "Needs Attention", class: "risk-attention", icon: "fa-exclamation-triangle" };
     }
 }
 
@@ -382,6 +383,31 @@ function calculateSubjectiveObjectiveScores(sectionBreakdown) {
     };
 }
 
+function updateScoreDisplay(index) {
+    const overallPercentage = resultsData.assessment.percentage;
+    const subjectivePercentage = resultsData.assessment.questionTypeBreakdown.subjective.percentage;
+    const objectivePercentage = resultsData.assessment.questionTypeBreakdown.objective.percentage;
+    
+    const labels = ["Overall Score", "Subjective Score", "Objective Score"];
+    const values = [overallPercentage, subjectivePercentage, objectivePercentage];
+    const colors = ["#667eea", "#ffc107", "#28a745"];
+
+    const scoreNumberElement = document.getElementById("scoreNumber");
+    const scoreLabelElement = document.querySelector(".score-label");
+
+    scoreNumberElement.textContent = `${values[index]}%`;
+    scoreLabelElement.textContent = labels[index];
+    scoreNumberElement.style.color = colors[index];
+    scoreLabelElement.style.color = colors[index];
+
+    // Update the chart to pop out the selected segment
+    if (scoreChart) {
+        scoreChart.data.datasets[0].offset = [0, 0, 0];
+        scoreChart.data.datasets[0].offset[index] = 20; // Increased offset for better visibility
+        scoreChart.update();
+    }
+}
+
 // Enhanced chart creation function
 function createScoreChart() {
     try {
@@ -425,15 +451,16 @@ function createScoreChart() {
                         "rgba(255, 193, 7, 1)",
                         "rgba(40, 167, 69, 1)"
                     ],
-                    borderWidth: 3,
-                    cutout: "70%",
-                    hoverBorderWidth: 4,
-                    hoverOffset: 8
+                    borderWidth: 4, // Increased border width
+                    cutout: "65%", // Slightly reduced cutout for better visibility
+                    offset: [20, 0, 0], // Increased initial offset
+                    hoverBorderWidth: 6, // Increased hover border width
+                    hoverOffset: 15 // Increased hover offset
                 }]
             },
             options: {
-                responsive: false,
-                maintainAspectRatio: false,
+                responsive: true,
+                maintainAspectRatio: true,
                 plugins: {
                     legend: {
                         display: false
@@ -443,31 +470,10 @@ function createScoreChart() {
                     }
                 },
                 onHover: (event, activeElements) => {
-                    // Change cursor on hover
-                    event.native.target.style.cursor = activeElements.length > 0 ? 'pointer' : 'default';
-                    
-                    // Update the center display based on hover
-                    const scoreNumberElement = document.getElementById("scoreNumber");
-                    const scoreLabelElement = document.querySelector(".score-label");
-                    
                     if (activeElements.length > 0) {
-                        const index = activeElements[0].index;
-                        const labels = ["Overall Score", "Subjective Score", "Objective Score"];
-                        const values = [overallPercentage, subjectivePercentage, objectivePercentage];
-                        
-                        scoreNumberElement.textContent = `${values[index]}%`;
-                        scoreLabelElement.textContent = labels[index];
-                        
-                        // Update color based on active segment
-                        const colors = ["#667eea", "#ffc107", "#28a745"];
-                        scoreNumberElement.style.color = colors[index];
-                        scoreLabelElement.style.color = colors[index];
+                        updateScoreDisplay(activeElements[0].index);
                     } else {
-                        // Reset to default (overall)
-                        scoreNumberElement.textContent = `${overallPercentage}%`;
-                        scoreLabelElement.textContent = "Overall Score";
-                        scoreNumberElement.style.color = "#667eea";
-                        scoreLabelElement.style.color = "#64748b";
+                        updateScoreDisplay(activeScoreIndex);
                     }
                 }
             }
@@ -475,6 +481,7 @@ function createScoreChart() {
         
         // Add custom legend
         createCustomLegend(overallPercentage, subjectivePercentage, objectivePercentage);
+        updateScoreDisplay(activeScoreIndex);
         
     } catch (error) {
         console.error("Error creating enhanced score chart:", error);
@@ -500,7 +507,7 @@ function createCustomLegend(overallPercentage, subjectivePercentage, objectivePe
         { label: "Objective", percentage: objectivePercentage, color: "#28a745" }
     ];
     
-    legendItems.forEach(item => {
+    legendItems.forEach((item, index) => {
         const legendItem = document.createElement("div");
         legendItem.style.cssText = `
             display: flex;
@@ -537,6 +544,12 @@ function createCustomLegend(overallPercentage, subjectivePercentage, objectivePe
         legendItem.addEventListener('mouseleave', () => {
             legendItem.style.backgroundColor = 'rgba(255, 255, 255, 0.8)';
             legendItem.style.boxShadow = 'none';
+        });
+
+        // Add click listener to update the active score
+        legendItem.addEventListener('click', () => {
+            activeScoreIndex = index;
+            updateScoreDisplay(activeScoreIndex);
         });
         
         legendContainer.appendChild(legendItem);
