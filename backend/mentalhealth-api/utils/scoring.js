@@ -99,19 +99,101 @@ Output the evaluation in JSON format.
       throw new Error(`OpenRouter API error: ${response.status} ${response.statusText}`);
     }
 
-    const data = await response.json();
-    const llmEvaluation = JSON.parse(data.choices[0].message.content);
+    try {
+      const data = await response.json();
+      const llmEvaluation = JSON.parse(data.choices[0].message.content);
+      console.log("LLM Evaluation:", llmEvaluation); 
 
-    // Map LLM output to expected format, including missingCriteria
-    return {
-      score: llmEvaluation.score,
-      maxScore: llmEvaluation.maxScore,
-      matchedCriteria: llmEvaluation.matchedCriteria || [],
-      missingCriteria: llmEvaluation.missingCriteria || [],
-      explanation: llmEvaluation.explanation || "LLM evaluation completed."
-    };
+      // Ensure score and maxScore are numbers, default to 0 if not
+      const score = Number(llmEvaluation.score) || 0;
+      const maxScore = Number(llmEvaluation.maxScore) || 0;
 
-  } catch (error) {
+      // Map LLM output to expected format, including missingCriteria
+      return {
+        score: score,
+        maxScore: maxScore,
+        matchedCriteria: llmEvaluation.matchedCriteria || [],
+        missingCriteria: llmEvaluation.missingCriteria || [],
+        explanation: llmEvaluation.explanation || "LLM evaluation completed."
+      };
+
+    } catch (parseError) {
+      console.error("Error parsing LLM response JSON, falling back to keyword matching:", parseError);
+      // Fallback to keyword matching if JSON parsing fails
+      const normalizedAnswer = answer.toLowerCase().trim();
+      const matchedCriteria = [];
+      let criteriaScore = 0;
+      const missingCriteria = [...criteria]; // Initialize missing criteria
+
+      // keyword matching with synonyms and context
+      const synonymMap = {
+        'peace': ['tranquility', 'calm', 'serenity', 'harmony', 'stillness'],
+        'gratitude': ['thankful', 'appreciation', 'blessed', 'grateful'],
+        'wisdom': ['knowledge', 'understanding', 'insight', 'experience'],
+        'growth': ['development', 'progress', 'evolution', 'improvement'],
+        'love': ['affection', 'care', 'compassion', 'kindness'],
+        'strength': ['power', 'resilience', 'fortitude', 'courage'],
+        'reflection': ['contemplation', 'meditation', 'thinking', 'pondering'],
+        'cognitive': ['intellectual', 'mental', 'thinking', 'mind'],
+        'memory': ['recall', 'remembrance', 'recollection'],
+        'attention': ['focus', 'concentration', 'mindfulness'],
+        'awareness': ['understanding', 'insight', 'consciousness'],
+        'assessment': ['evaluation', 'check', 'review']
+      };
+
+      criteria.forEach(criterion => {
+        const normalizedCriterion = criterion.toLowerCase();
+        let found = false;
+
+        // Split criterion into words for more flexible matching
+        const criterionWords = normalizedCriterion.split(' ');
+
+        // Check if any word from the criterion (or its synonyms) is present in the answer
+        found = criterionWords.some(word => {
+          if (normalizedAnswer.includes(word)) {
+            return true;
+          }
+          const synonyms = synonymMap[word] || [];
+          return synonyms.some(synonym => normalizedAnswer.includes(synonym));
+        });
+
+        if (found) {
+          matchedCriteria.push(criterion);
+          const index = missingCriteria.indexOf(criterion);
+          if (index > -1) {
+            missingCriteria.splice(index, 1); // Remove from missing
+          }
+        }
+      });
+
+      // Calculate base criteria score
+      if (matchedCriteria.length === criteria.length) {
+        criteriaScore = 1.0; // Full score for all criteria
+      } else if (matchedCriteria.length > 0) {
+        // More generous partial scoring with minimum threshold
+        const matchRatio = matchedCriteria.length / criteria.length;
+        criteriaScore = Math.max(0.3, matchRatio * 0.9); // Minimum 30%, max 90% for partial
+      }
+
+      // Quality assessment bonus (up to 10% additional)
+      let qualityBonus = 0;
+      const wordCount = normalizedAnswer.split(/\s+/).length;
+
+      if (wordCount >= 20) qualityBonus += 0.05; // Detailed response
+      if (normalizedAnswer.includes('because') || normalizedAnswer.includes('since')) qualityBonus += 0.03; // Reasoning
+      if (matchedCriteria.length > 0 && wordCount >= 30) qualityBonus += 0.02; // Comprehensive response
+
+      const finalScore = Math.min(weight, (criteriaScore + qualityBonus) * weight);
+
+      return {
+        score: Math.round(finalScore * 100) / 100,
+        maxScore: weight,
+        matchedCriteria,
+        missingCriteria, // Include missing criteria in fallback
+        explanation: `Matched ${matchedCriteria.length}/${criteria.length} criteria (Fallback)`
+      };
+    }
+  } catch (error) { // This catch handles errors from the outer try (fetch errors)
     console.error("Error calling OpenRouter API, falling back to keyword matching:", error);
 
     const normalizedAnswer = answer.toLowerCase().trim();
@@ -189,14 +271,39 @@ Output the evaluation in JSON format.
   }
 }
 
-/**
- * Calculate score for objective questions
- * @param {string} selectedOption - Selected option key (A, B, C, D)
- * @param {Object} question - Question object with options
- * @returns {Object} Scoring details
- */
 function evaluateObjectiveAnswer(selectedOption, question) {
-  if (!selectedOption || !question.options[selectedOption]) {
+  console.log("Evaluating Objective Answer:", {
+    selectedOption,
+    questionText: question?.question?.en,
+    hasOptions: !!question?.options,
+    availableOptions: question?.options ? Object.keys(question.options) : []
+  });
+
+  // Check if question exists
+  if (!question) {
+    console.log("❌ No question provided");
+    return {
+      score: 0,
+      maxScore: 0,
+      selectedScore: 0,
+      details: "No question provided",
+    };
+  }
+
+  // Check if question has weight
+  if (!question.weight) {
+    console.log("❌ Question has no weight");
+    return {
+      score: 0,
+      maxScore: 0,
+      selectedScore: 0,
+      details: "Question has no weight defined",
+    };
+  }
+
+  // Check if selectedOption exists
+  if (!selectedOption || selectedOption.trim() === '') {
+    console.log("❌ No selected option provided");
     return {
       score: 0,
       maxScore: question.weight,
@@ -205,10 +312,42 @@ function evaluateObjectiveAnswer(selectedOption, question) {
     };
   }
 
+  // Check if question has options
+  if (!question.options) {
+    console.log("❌ Question has no options");
+    return {
+      score: 0,
+      maxScore: question.weight,
+      selectedScore: 0,
+      details: "Question has no options defined",
+    };
+  }
+
+  // Check if selected option exists in question options
+  if (!question.options[selectedOption]) {
+    console.log(`❌ Selected option '${selectedOption}' not found`);
+    console.log("Available options:", Object.keys(question.options));
+    return {
+      score: 0,
+      maxScore: question.weight,
+      selectedScore: 0,
+      details: `Selected option '${selectedOption}' not found. Available: ${Object.keys(question.options).join(', ')}`,
+    };
+  }
+
+  // Calculate scores
   const optionScore = question.options[selectedOption].score;
-  const questionScore = question.weight * optionScore;
   const maxOptionScore = Math.max(...Object.values(question.options).map(opt => opt.score));
+  const questionScore = question.weight * (maxOptionScore - optionScore);
   const maxScore = question.weight * maxOptionScore;
+
+  console.log("✅ Objective scoring successful:", {
+    optionScore,
+    questionWeight: question.weight,
+    finalScore: questionScore,
+    maxScore
+  });
+
   return {
     score: questionScore,
     maxScore,
@@ -218,106 +357,131 @@ function evaluateObjectiveAnswer(selectedOption, question) {
   };
 }
 
-/**
- * Calculate section score
- * @param {Array} userAnswers - User answers for this section
- * @param {Object} sectionData - Section data from questionnaire
- * @param {string} sectionName - Name of the section
- * @returns {Object} Section scoring details
- */
 async function calculateSectionScore(userAnswers, sectionData, sectionName) {
-  const sectionAnswers = userAnswers.filter(answer => answer.section === sectionName);
-  const sectionWeight = parseFloat(sectionData.weight.replace('%', '')) / 100;
-  let totalScore = 0;
-  let maxPossibleScore = 0;
-  const questionDetails = [];
+    const sectionAnswers = userAnswers.filter(answer => answer.section === sectionName);
+    const sectionWeight = parseFloat(sectionData.weight.replace('%', '')) / 100;
+    
+    let totalScore = 0;
+    let maxPossibleScore = 0;
+    const questionDetails = [];
 
-  await Promise.all(sectionData.Subjective?.map(async (question, index) => {
-    const userAnswer = sectionAnswers.find(ans => ans.type === 'Subjective' && ans.questionId === question.id);
-    const evaluation = await evaluateSubjectiveAnswer(
-      {
-        question: question.question.en,
-        answer: userAnswer?.answer || ''
-      },
-      question.criteria || [],
-      question.weight
-    );
-    totalScore += evaluation.score;
-    maxPossibleScore += evaluation.maxScore;
-    questionDetails.push({
-      type: 'Subjective',
-      questionId: question.id,
-      question: question.question.en,
-      ...evaluation,
-    });
-  }));
+    // Process Subjective Questions
+    if (sectionData.Subjective) {
+        await Promise.all(sectionData.Subjective.map(async (question, index) => {
+            const userAnswer = sectionAnswers.find(ans => 
+                ans.type === 'Subjective' && ans.questionId === question.id
+            );
 
-  sectionData.Objective?.forEach((question, index) => {
-    const userAnswer = sectionAnswers.find(ans => ans.type === 'Objective' && ans.questionIndex === index);
-    const evaluation = evaluateObjectiveAnswer(userAnswer?.selectedOption, question);
-    totalScore += evaluation.score;
-    maxPossibleScore += evaluation.maxScore;
-    questionDetails.push({
-      type: 'Objective',
-      questionIndex: index,
-      question: question.question.en,
-      ...evaluation,
-    });
-  });
+            const evaluation = await evaluateSubjectiveAnswer(
+                {
+                    question: question.question.en,
+                    answer: userAnswer?.answer || ''
+                },
+                question.criteria || [],
+                question.weight
+            );
 
-  const weightedScore = totalScore * sectionWeight;
-  const maxWeightedScore = maxPossibleScore * sectionWeight;
-  return {
-    sectionName,
-    rawScore: Math.round(totalScore * 100) / 100,
-    maxRawScore: maxPossibleScore,
-    sectionWeight,
-    weightedScore: Math.round(weightedScore * 100) / 100,
-    maxWeightedScore: Math.round(maxWeightedScore * 100) / 100,
-    percentage: maxPossibleScore > 0 ? Math.round((totalScore / maxPossibleScore) * 100) : 0,
-    questionDetails,
-  };
+            totalScore += evaluation.score;
+            maxPossibleScore += evaluation.maxScore;
+            
+            questionDetails.push({
+                type: 'Subjective',
+                questionId: question.id,
+                question: question.question.en,
+                answer: userAnswer?.answer || '',
+                ...evaluation,
+            });
+        }));
+    }
+
+    // Process Objective Questions - FIXED VERSION
+    if (sectionData.Objective) {
+        sectionData.Objective.forEach((question, index) => {
+            // Find user answer by section, type, and questionIndex
+            const userAnswer = sectionAnswers.find(ans => 
+                ans.type === 'Objective' && 
+                ans.section === sectionName && 
+                ans.questionIndex === index
+            );
+
+            console.log(`Objective Question ${index} in ${sectionName}:`, {
+                question: question.question.en,
+                userAnswer: userAnswer,
+                selectedOption: userAnswer?.selectedOption
+            });
+
+            const evaluation = evaluateObjectiveAnswer(userAnswer?.selectedOption, question);
+            
+            console.log(`Objective Evaluation for ${sectionName}-${index}:`, evaluation);
+            
+            totalScore += evaluation.score;
+            maxPossibleScore += evaluation.maxScore;
+            
+            questionDetails.push({
+                type: 'Objective',
+                questionIndex: index,
+                sectionName: sectionName,
+                question: question.question.en,
+                selectedOption: userAnswer?.selectedOption,
+                ...evaluation,
+            });
+        });
+    }
+
+    const weightedScore = totalScore * sectionWeight;
+    const maxWeightedScore = maxPossibleScore * sectionWeight;
+
+    return {
+        sectionName,
+        rawScore: Math.round(totalScore * 100) / 100,
+        maxRawScore: maxPossibleScore,
+        sectionWeight,
+        weightedScore: Math.round(weightedScore * 100) / 100,
+        maxWeightedScore: Math.round(maxWeightedScore * 100) / 100,
+        percentage: maxPossibleScore > 0 ? Math.round((totalScore / maxPossibleScore) * 100) : 0,
+        questionDetails,
+    };
 }
 
 export function calculateSubjectiveObjectiveBreakdown(sectionScores) {
-    let totalSubjectiveScore = 0;
-    let maxSubjectiveScore = 0;
-    let totalObjectiveScore = 0;
-    let maxObjectiveScore = 0;
-    
-    sectionScores.forEach(section => {
-        if (section.questionDetails) {
-            section.questionDetails.forEach(question => {
-                if (question.type === 'Subjective') {
-                    totalSubjectiveScore += question.score || 0;
-                    maxSubjectiveScore += question.maxScore || 0;
-                } else if (question.type === 'Objective') {
-                    totalObjectiveScore += question.score || 0;
-                    maxObjectiveScore += question.maxScore || 0;
-                }
-            });
+  let totalSubjectiveScore = 0;
+  let maxSubjectiveScore = 0;
+  let totalObjectiveScore = 0;
+  let maxObjectiveScore = 0;
+
+  sectionScores.forEach(section => {
+    if (section.questionDetails) {
+      section.questionDetails.forEach(question => {
+        if (question.type === 'Subjective') {
+          totalSubjectiveScore += question.score || 0;
+          maxSubjectiveScore += question.maxScore || 0;
+        } else if (question.type === 'Objective') {
+          totalObjectiveScore += question.score || 0;
+          maxObjectiveScore += question.maxScore || 0;
         }
-    });
-    
-    const subjectivePercentage = maxSubjectiveScore > 0 ? Math.round((totalSubjectiveScore / maxSubjectiveScore) * 100) : 0;
-    const objectivePercentage = maxObjectiveScore > 0 ? Math.round((totalObjectiveScore / maxObjectiveScore) * 100) : 0;
-    
-    return {
-        subjective: {
-            score: Math.round(totalSubjectiveScore * 100) / 100,
-            maxScore: Math.round(maxSubjectiveScore * 100) / 100,
-            percentage: subjectivePercentage,
-            questionCount: sectionScores.reduce((count, section) => 
-                count + (section.questionDetails?.filter(q => q.type === 'Subjective').length || 0), 0)
-        },
-        objective: {
-            score: Math.round(totalObjectiveScore * 100) / 100,
-            maxScore: Math.round(maxObjectiveScore * 100) / 100,
-            percentage: objectivePercentage,
-            questionCount: sectionScores.reduce((count, section) => 
-                count + (section.questionDetails?.filter(q => q.type === 'Objective').length || 0), 0)
-        }
-    };
+      });
+    }
+  });
+
+  const subjectivePercentage = maxSubjectiveScore > 0 ? Math.round((totalSubjectiveScore / maxSubjectiveScore) * 100) : 0;
+  const objectivePercentage = maxObjectiveScore > 0 ? Math.round((totalObjectiveScore / maxObjectiveScore) * 100) : 0;
+
+  return {
+    subjective: {
+      score: Math.round(totalSubjectiveScore * 100) / 100,
+      maxScore: Math.round(maxSubjectiveScore * 100) / 100,
+      percentage: subjectivePercentage,
+      questionCount: sectionScores.reduce((count, section) =>
+        count + (section.questionDetails?.filter(q => q.type === 'Subjective').length || 0), 0)
+    },
+    objective: {
+      score: Math.round(totalObjectiveScore * 100) / 100,
+      maxScore: Math.round(maxObjectiveScore * 100) / 100,
+      percentage: objectivePercentage,
+      questionCount: sectionScores.reduce((count, section) =>
+        count + (section.questionDetails?.filter(q => q.type === 'Objective').length || 0), 0)
+    }
+  };
 }
 
 /**
@@ -344,13 +508,13 @@ export async function calculateScore(userAnswers, questionnaireData) {
   });
 
   const finalPercentage = maxTotalWeightedScore > 0 ? Math.round((totalWeightedScore / maxTotalWeightedScore) * 100) : 0;
-  
+
   // Calculate subjective/objective breakdown
   const questionTypeBreakdown = calculateSubjectiveObjectiveBreakdown(sectionScores);
 
   let mentalAgeCategory = '';
   let recommendations = [];
-  
+
   if (finalPercentage >= 85) {
     mentalAgeCategory = 'Excellent Mental Resilience';
     recommendations = [
