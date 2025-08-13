@@ -153,6 +153,7 @@ body::before {
   color: #64748b;
   font-size: 14px;
   font-weight: 500;
+  margin-bottom: 5px;
 }
 
 .score-overview {

@@ -7,7 +7,10 @@
     "test": "jest",
     "start": "node index.js",
     "dev": "nodemon index.js",
-    "seed": "node seed.js"
+    "seed": "node seed.js",
+    "lint": "eslint . --ext .js",
+    "lint:fix": "eslint . --ext .js --fix",
+    "format": "prettier --write ."
   },
   "author": "",
   "license": "ISC",
@@ -17,15 +20,24 @@
     "cors": "^2.8.5",
     "dotenv": "^16.5.0",
     "express": "^5.1.0",
+    "express-rate-limit": "^7.4.0",
     "helmet": "^8.1.0",
     "mongoose": "^8.15.1",
     "nodemailer": "^7.0.4",
-    "winston": "^3.17.0"
+    "winston": "^3.17.0",
+    "zod": "^3.23.8"
   },
   "devDependencies": {
     "@babel/preset-env": "^7.28.0",
     "babel-jest": "^30.0.4",
+    "eslint": "^9.9.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-import": "^2.29.1",
+    "eslint-plugin-node": "^11.1.0",
     "jest": "^30.0.4",
-    "nodemon": "^3.1.10"
+    "nodemon": "^3.1.10",
+    "prettier": "^3.3.3",
+    "supertest": "^7.1.1",
+    "tslib": "^2.8.1"
   }
 }

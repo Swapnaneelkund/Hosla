@@ -5,6 +5,7 @@ const container = document.getElementById("form-container");
 const questionContainer = document.getElementById("questionContainer");
 const questionText = document.getElementById("questionText");
 const sectionHeading = document.getElementById("sectionHeading");
+const prevBtn = document.getElementById("prevBtn");
 const nextBtn = document.getElementById("nextBtn");
 const optionsContainer = document.getElementById("optionsContainer");
 const errorMsg = document.getElementById("errorMsg");
@@ -20,6 +21,7 @@ let currentIndex = 0;
 let startTime = null;
 let selectedLanguage = "en";
 let userInfo = { createdAt: new Date().toISOString(), data: {}, responses: [] };
+let previousAnswers = {};
 document.addEventListener("change", function (e) {
   if (e.target.type === "radio") {
     const groupName = e.target.name;
@@ -135,16 +137,6 @@ if (languageSelect) {
   updateStaticText();
 }
 document.addEventListener("DOMContentLoaded", () => {
-  const savedUserInfo = localStorage.getItem("savedUserInfo");
-  const savedIndex = localStorage.getItem("savedIndex");
-
-  if (savedUserInfo && savedIndex) {
-    userInfo = JSON.parse(savedUserInfo);
-    currentIndex = parseInt(savedIndex, 10);
-    // Directly fetch questions and display the current one
-    getData();
-  } else {
-    // Only attach form listener if no saved data (initial load)
     if (form) {
       form.addEventListener("submit", function (e) {
         console.log("Form submit event triggered.");
@@ -159,7 +151,6 @@ document.addEventListener("DOMContentLoaded", () => {
         }, 300);
       });
     }
-  }
 });
 
 function showLoading() {
@@ -326,18 +317,46 @@ function showQuestion(index) {
 
       optionsContainer.appendChild(optionDiv);
     });
+
+    if (previousAnswers[currentIndex]) {
+      const previousAnswer = previousAnswers[currentIndex];
+      const radioToCheck = document.querySelector(`input[value="${previousAnswer}"]`);
+      if (radioToCheck) {
+        radioToCheck.checked = true;
+        radioToCheck.closest(".option-item").classList.add("selected");
+      }
+    }
+
   } else {
     nextBtn.classList.remove("hidden");
     optionsContainer.innerHTML = `
             <textarea id="subjectiveAnswer" class="textarea-input" rows="6" placeholder="Type your answer here..."></textarea>
         `;
+
+    if (previousAnswers[currentIndex]) {
+      const textarea = document.getElementById("subjectiveAnswer");
+      textarea.value = previousAnswers[currentIndex];
+    }
   }
 
   questionContainer.classList.remove("hidden");
   updateProgress(index);
   startTime = Date.now();
   localStorage.setItem("savedIndex", currentIndex.toString());
+
+  if (currentIndex > 0) {
+    prevBtn.classList.remove("hidden");
+  } else {
+    prevBtn.classList.add("hidden");
+  }
 }
+
+prevBtn.addEventListener("click", () => {
+  if (currentIndex > 0) {
+    currentIndex--;
+    showQuestion(currentIndex);
+  }
+});
 
 nextBtn.addEventListener("click", () => {
   const q = questions[currentIndex];
@@ -367,6 +386,8 @@ nextBtn.addEventListener("click", () => {
     selectedAnswer = textarea.value.trim();
   }
 
+  previousAnswers[currentIndex] = selectedAnswer;
+
   // --- Map to backend expected format ---
   let answerObj = {
     section: q.section,
@@ -381,9 +402,6 @@ nextBtn.addEventListener("click", () => {
   }
   userInfo.responses.push(answerObj);
   // --- End mapping ---
-
-  localStorage.setItem("savedUserInfo", JSON.stringify(userInfo));
-  localStorage.setItem("savedIndex", currentIndex.toString());
 
   currentIndex++;
   if (currentIndex < questions.length) {
@@ -441,7 +459,7 @@ function sendData(data) {
       localStorage.removeItem("savedIndex");
 
       // --- Save backend result and redirect to results page ---
-      localStorage.setItem("mh_assessment_result", JSON.stringify(result.data));
+      localStorage.setItem("mh_assessment_result", JSON.stringify({ ...result.data, userInfo }));
       window.location.href = "mentalHealthResult.html";
       // --- End redirect ---
     })

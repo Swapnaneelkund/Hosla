@@ -364,7 +364,41 @@ body::before {
 }
 
 .options-container {
-    margin-bottom: 24px
+  margin-bottom: 20px;
+}
+
+.navigation-buttons {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.prev-btn,
+.next-btn {
+  padding: 10px 20px;
+  border-radius: 5px;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  transition: background-color 0.3s;
+}
+
+.prev-btn {
+  background-color: #ccc;
+  color: #333;
+}
+
+.prev-btn:hover {
+  background-color: #bbb;
+}
+
+.next-btn {
+  background-color: #4caf50;
+  color: white;
+}
+
+.next-btn:hover {
+  background-color: #45a049;
 }
 
 .option-item {

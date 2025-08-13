@@ -1,7 +1,10 @@
-import calculateScore, { getSectionRecommendations } from "../utils/scoring.js";
+// Updated import: use new modular scoring service (was ../utils/scoring.js)
+import { calculateScore, getSectionRecommendations } from "../services/scoring/aggregator.js";
 import mentalAgeQuestionnaire from "../data/question.js";
 import { apiResponce } from "../utils/ApiResponseHandler.js";
 import AssessmentResult from "../models/assessmentResultModel.js";
+import Question from "../models/questionModel.js";
+import logger from "../utils/logger.js";
 
 /**
  * Predict mental health based on user answers
@@ -13,7 +16,7 @@ export const predictMentalHealth = async (req, res) => {
     const { userAnswers, userId, userName } = req.body;
     
     // Validate input
-    if (!userAnswers || !Array.isArray(userAnswers)) {
+  if (!userAnswers || !Array.isArray(userAnswers)) {
       const response = new apiResponce(400, null, "Invalid user answers format");
       return res.status(response.statusCode).json(response);
     }
@@ -101,16 +104,14 @@ export const predictMentalHealth = async (req, res) => {
       completionRate: scoringResult.completionRate,
     });
 
-    await newAssessment.save();
-    console.log("Assessment result saved to database.");
-
-    console.log(`Mental Health Assessment completed - Score: ${scoringResult.percentage}%, Category: ${scoringResult.mentalAgeCategory}`);
+  await newAssessment.save();
+  logger.info(`Assessment saved. score=${scoringResult.percentage}% category=${scoringResult.mentalAgeCategory}`);
     
     const response = new apiResponce(200, responseData, "Mental health assessment completed successfully");
     return res.status(response.statusCode).json(response);
     
   } catch (error) {
-    console.error("Error in mental health prediction:", error);
+    logger.error(`Error in mental health prediction: ${error.message}`);
     const response = new apiResponce(500, null, "Internal server error during assessment");
     return res.status(response.statusCode).json(response);
   }
@@ -150,7 +151,7 @@ export const getAssessmentHistory = async (req, res) => {
     return res.status(response.statusCode).json(response);
     
   } catch (error) {
-    console.error("Error retrieving assessment history:", error);
+    logger.error(`Error retrieving assessment history: ${error.message}`);
     const response = new apiResponce(500, null, "Internal server error");
     return res.status(response.statusCode).json(response);
   }

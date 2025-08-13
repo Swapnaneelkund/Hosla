@@ -162,6 +162,16 @@ function displayResults(data) {
         }
     )}`;
 
+    // Calculate and display time taken
+    if (data.userInfo && data.userInfo.createdAt) {
+        const startTime = new Date(data.userInfo.createdAt);
+        const endTime = new Date();
+        const timeDiff = Math.abs(endTime - startTime);
+        const minutes = Math.floor(timeDiff / 60000);
+        const seconds = ((timeDiff % 60000) / 1000).toFixed(0);
+        document.getElementById("timeTaken").textContent = `Time Taken: ${minutes}m ${seconds}s`;
+    }
+
     // Update overall score
     document.getElementById(
         "scoreNumber"
