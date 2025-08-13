@@ -18,6 +18,7 @@ EXPOSE 8000
 
 USER node
 
-HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 CMD wget -qO- http://127.0.0.1:8000/health || exit 1
+# Lightweight JS healthcheck (avoid wget flakiness)
+HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=5 CMD node -e "const http=require('http');const req=http.get('http://127.0.0.1:8000/health',r=>{if(r.statusCode!==200)process.exit(1);}).on('error',()=>process.exit(1)); setTimeout(()=>req.abort(),4000);"
 
 CMD ["node", "index.js"]

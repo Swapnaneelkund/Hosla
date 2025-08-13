@@ -48,6 +48,16 @@ app.use((req,res,next)=>{
   next();
 });
 logger.info("App initializing...");
+// Root route helper (avoid 404 confusion)
+app.get('/', (req, res) => {
+  res.json({
+    name: 'mentalhealth-api',
+    status: 'running',
+    health: '/health',
+    endpoints: ['/api/mentalhealth', '/api/email'],
+    version: '1.0.0'
+  });
+});
 // Enhanced health endpoint
 app.get('/health', async (req, res) => {
   const state = mongoose.connection?.readyState;

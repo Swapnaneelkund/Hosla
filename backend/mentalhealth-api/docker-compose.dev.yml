@@ -1,0 +1,27 @@
+version: "3.9"
+services:
+  mongo:
+    image: mongo:7
+    container_name: hosla-mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    restart: unless-stopped
+  api:
+    build: .
+    container_name: hosla-api
+    env_file: .env
+    environment:
+      NODE_ENV: development
+      DB_EXIT_ON_FAIL: "false"
+      DB_MAX_RETRIES: "20"
+      DB_RETRY_DELAY_MS: "2000"
+      mongodbURI: mongodb://mongo:27017/hosla_db
+    ports:
+      - "8000:8000"
+    depends_on:
+      - mongo
+    restart: unless-stopped
+volumes:
+  mongo_data:
