@@ -19,11 +19,15 @@ if (env.mongodbURI) {
   logger.warn("No MongoDB URI found in .env. Skipping database connection.");
 }
 
-const allowedOrigin = env.CORS_ORIGIN || "http://127.0.0.1:5500";
+// CORS: support comma-separated list in CORS_ORIGIN (e.g., "https://app.example.com, http://localhost:5500")
+const allowedOrigins = (env.CORS_ORIGIN || "http://127.0.0.1:5500")
+  .split(',')
+  .map(o => o.trim())
+  .filter(Boolean);
 
 app.use(cors({
   origin: (origin, cb) => {
-    if (!origin || origin === allowedOrigin) return cb(null, true);
+    if (!origin || allowedOrigins.includes(origin)) return cb(null, true);
     return cb(new Error('CORS not allowed'), false);
   },
   credentials: true,
