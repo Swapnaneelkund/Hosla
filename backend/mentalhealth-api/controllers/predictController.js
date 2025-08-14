@@ -5,6 +5,7 @@ import { apiResponce } from "../utils/ApiResponseHandler.js";
 import AssessmentResult from "../models/assessmentResultModel.js";
 import Question from "../models/questionModel.js";
 import logger from "../utils/logger.js";
+import mongoose from 'mongoose';
 
 /**
  * Predict mental health based on user answers
@@ -89,23 +90,30 @@ export const predictMentalHealth = async (req, res) => {
       message: generatePersonalizedMessage(scoringResult.percentage, scoringResult.mentalAgeCategory)
     };
 
-    // Save the assessment result to the database
-    const newAssessment = new AssessmentResult({
-      userId: userId || null,
-      userName: userName || null,
-      finalScore: scoringResult.finalScore,
-      maxPossibleScore: scoringResult.maxPossibleScore,
-      percentage: scoringResult.percentage,
-      mentalAgeCategory: scoringResult.mentalAgeCategory,
-      recommendations: scoringResult.recommendations,
-      sectionBreakdown: scoringResult.sectionBreakdown, // This already contains questionDetails
-      timestamp: scoringResult.timestamp,
-      totalQuestions: scoringResult.totalQuestions,
-      completionRate: scoringResult.completionRate,
-    });
-
-  await newAssessment.save();
-  logger.info(`Assessment saved. score=${scoringResult.percentage}% category=${scoringResult.mentalAgeCategory}`);
+    // Save the assessment result to the database (only if DB is connected)
+    try {
+      if (mongoose.connection?.readyState === 1) {
+        const newAssessment = new AssessmentResult({
+          userId: userId || null,
+          userName: userName || null,
+          finalScore: scoringResult.finalScore,
+          maxPossibleScore: scoringResult.maxPossibleScore,
+          percentage: scoringResult.percentage,
+          mentalAgeCategory: scoringResult.mentalAgeCategory,
+          recommendations: scoringResult.recommendations,
+          sectionBreakdown: scoringResult.sectionBreakdown, // contains questionDetails
+          timestamp: scoringResult.timestamp,
+          totalQuestions: scoringResult.totalQuestions,
+          completionRate: scoringResult.completionRate,
+        });
+        await newAssessment.save();
+        logger.info(`Assessment saved. score=${scoringResult.percentage}% category=${scoringResult.mentalAgeCategory}`);
+      } else {
+        logger.warn('Skipping DB save: MongoDB is not connected (readyState!=' + mongoose.connection?.readyState + ')');
+      }
+    } catch (saveErr) {
+      logger.error('Failed to save assessment (continuing without persistence): ' + saveErr.message);
+    }
     
     const response = new apiResponce(200, responseData, "Mental health assessment completed successfully");
     return res.status(response.statusCode).json(response);
