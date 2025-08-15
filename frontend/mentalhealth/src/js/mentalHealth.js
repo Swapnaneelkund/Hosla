@@ -1,4 +1,6 @@
 const BASE_API_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') ? 'http://localhost:8000' : 'https://hosla-api.onrender.com';
+// Minimum characters required for subjective answers; keep in sync with backend validation
+const SUBJECTIVE_MIN_CHARS = 3;
 
 const form = document.getElementById("userForm");
 const container = document.getElementById("form-container");
@@ -50,7 +52,8 @@ const translations = {
     next: "Next",
     thankYou: "Thank you! Submitting your answers...",
     selectOption: "Please select an option before proceeding.",
-    typeAnswer: "Please type your answer before proceeding.",
+  typeAnswer: "Please type your answer before proceeding.",
+  minChars: (n) => `Answer must be at least ${n} characters.`,
     progress: (current, total) => `Question ${current} of ${total}`,
   },
   hi: {
@@ -71,7 +74,8 @@ const translations = {
     next: "आगे",
     thankYou: "धन्यवाद! आपके उत्तर सबमिट किए जा रहे हैं... ",
     selectOption: "कृपया आगे बढ़ने से पहले एक विकल्प चुनें।",
-    typeAnswer: "कृपया आगे बढ़ने से पहले उत्तर लिखें।",
+  typeAnswer: "कृपया आगे बढ़ने से पहले उत्तर लिखें।",
+  minChars: (n) => `उत्तर कम से कम ${n} अक्षरों का होना चाहिए।`,
     progress: (current, total) => `प्रश्न ${current} / ${total}`,
   },
   bn: {
@@ -92,7 +96,8 @@ const translations = {
     next: "পরবর্তী",
     thankYou: "ধন্যবাদ! আপনার উত্তর জমা দেওয়া হচ্ছে... ",
     selectOption: "অনুগ্রহ করে একটি অপশন নির্বাচন করুন।",
-    typeAnswer: "অনুগ্রহ করে উত্তর লিখুন।",
+  typeAnswer: "অনুগ্রহ করে উত্তর লিখুন।",
+  minChars: (n) => `উত্তর কমপক্ষে ${n} অক্ষরের হতে হবে।`,
     progress: (current, total) => `প্রশ্ন ${current} / ${total}`,
   },
 };
@@ -292,6 +297,8 @@ function showQuestion(index) {
 
   if (q.type === "objective" && q.options?.length > 0) {
     nextBtn.classList.remove("hidden");
+  nextBtn.disabled = false;
+  nextBtn.classList.remove("disabled");
     q.options.forEach((opt, idx) => {
       const optionId = `option_${idx}`;
       const optionText =
@@ -337,6 +344,26 @@ function showQuestion(index) {
       const textarea = document.getElementById("subjectiveAnswer");
       textarea.value = previousAnswers[currentIndex];
     }
+
+    // Real-time validation for subjective answers
+    const textarea = document.getElementById("subjectiveAnswer");
+    const validate = () => {
+      const val = (textarea.value || "").trim();
+      if (val.length < SUBJECTIVE_MIN_CHARS) {
+        errorMsg.textContent = t("minChars", SUBJECTIVE_MIN_CHARS);
+        errorMsg.classList.remove("hidden");
+        nextBtn.disabled = true;
+        nextBtn.classList.add("disabled");
+        return false;
+      }
+      errorMsg.classList.add("hidden");
+      nextBtn.disabled = false;
+      nextBtn.classList.remove("disabled");
+      return true;
+    };
+    textarea.addEventListener("input", validate);
+    // Run once to set initial state
+    validate();
   }
 
   questionContainer.classList.remove("hidden");
@@ -378,12 +405,18 @@ nextBtn.addEventListener("click", () => {
     selectedAnswer = selected.value;
   } else {
     const textarea = document.getElementById("subjectiveAnswer");
-    if (!textarea || textarea.value.trim() === "") {
+    const val = textarea ? textarea.value.trim() : "";
+    if (!textarea || val === "") {
       errorMsg.textContent = t("typeAnswer");
       errorMsg.classList.remove("hidden");
       return;
     }
-    selectedAnswer = textarea.value.trim();
+    if (val.length < SUBJECTIVE_MIN_CHARS) {
+      errorMsg.textContent = t("minChars", SUBJECTIVE_MIN_CHARS);
+      errorMsg.classList.remove("hidden");
+      return;
+    }
+    selectedAnswer = val;
   }
 
   previousAnswers[currentIndex] = selectedAnswer;
@@ -391,7 +424,8 @@ nextBtn.addEventListener("click", () => {
   // --- Map to backend expected format ---
   let answerObj = {
     section: q.section,
-    type: q.type === "objective" ? "Objective" : "Subjective"
+    type: q.type === "objective" ? "Objective" : "Subjective",
+    timeTakenSec: timeTaken
   };
   if (q.type === "subjective") {
     answerObj.questionId = q.questionId || `Q${currentIndex + 1}`;

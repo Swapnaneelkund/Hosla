@@ -12,7 +12,8 @@ export async function calculateSectionScore(userAnswers, sectionData, sectionNam
 			question: q.question.en,
 			criteria: q.criteria||[],
 			weight: q.weight,
-			answer: (sectionAnswers.find(a=>a.type==='Subjective' && a.questionId===q.id)?.answer)||''
+			answer: (sectionAnswers.find(a=>a.type==='Subjective' && a.questionId===q.id)?.answer)||'',
+			timeTakenSec: Number(sectionAnswers.find(a=>a.type==='Subjective' && a.questionId===q.id)?.timeTakenSec)||undefined
 		}));
 		let evaluations;
 		try {
@@ -28,7 +29,7 @@ export async function calculateSectionScore(userAnswers, sectionData, sectionNam
 		subjectiveQuestions.forEach((q,i)=>{
 			const evalRes = evaluations[i];
 			totalScore += evalRes.score; maxPossible += evalRes.maxScore;
-			questionDetails.push({ type:'Subjective', questionId: q.id, question: q.question, answer: q.answer, ...evalRes });
+			questionDetails.push({ type:'Subjective', questionId: q.id, question: q.question, answer: q.answer, timeTakenSec: q.timeTakenSec, ...evalRes });
 		});
 	}
 	if(sectionData.Objective){
@@ -36,7 +37,7 @@ export async function calculateSectionScore(userAnswers, sectionData, sectionNam
 			const ans = sectionAnswers.find(a=>a.type==='Objective' && a.questionIndex===idx);
 			const evalRes = evaluateObjectiveAnswer(ans?.selectedOption, q);
 			totalScore += evalRes.score; maxPossible += evalRes.maxScore;
-			questionDetails.push({ type:'Objective', questionIndex: idx, sectionName, question: q.question.en, selectedOption: ans?.selectedOption, ...evalRes });
+			questionDetails.push({ type:'Objective', questionIndex: idx, sectionName, question: q.question.en, selectedOption: ans?.selectedOption, timeTakenSec: Number(ans?.timeTakenSec)||undefined, ...evalRes });
 		});
 	}
 	const weighted = totalScore * sectionWeight;
@@ -76,16 +77,48 @@ export async function calculateScore(userAnswers, questionnaireData){
 	let totalWeighted=0, maxTotalWeighted=0; sectionScores.forEach(s=>{ totalWeighted+=s.weightedScore; maxTotalWeighted+=s.maxWeightedScore; });
 	const percentage = maxTotalWeighted>0? Math.round((totalWeighted/maxTotalWeighted)*100):0;
 	const questionTypeBreakdown = calculateSubjectiveObjectiveBreakdown(sectionScores);
+
+	// Evaluation metadata: count LLM vs fallback on subjective and average time
+	let llmCount=0, fallbackCount=0, timeSum=0, timeN=0;
+	sectionScores.forEach(s=>{
+		s.questionDetails?.forEach(q=>{
+			if(q.type==='Subjective'){
+				if(q.method==='llm') llmCount++; else if(q.method==='fallback') fallbackCount++;
+			}
+			if(typeof q.timeTakenSec==='number') { timeSum+=q.timeTakenSec; timeN++; }
+		});
+	});
+	const evaluationMeta = {
+		subjectiveMethodUsage: { llm: llmCount, fallback: fallbackCount },
+		timing: { averageTimeSec: timeN? Math.round((timeSum/timeN)*10)/10 : null }
+	};
 	let category='', recommendations=[];
 	if(percentage>=85){ category='Excellent Mental Resilience'; recommendations=['Continue excellent practices','Mentor others','Maintain connections']; }
 	else if(percentage>=70){ category='Good Mental Well-being'; recommendations=['Focus on lower areas','Increase community involvement','Practice mindfulness']; }
 	else if(percentage>=55){ category='Moderate Mental Health'; recommendations=['Work on emotional flexibility','Engage community','Develop spiritual practices','Cognitive exercises']; }
 	else { category='Needs Attention'; recommendations=['Seek professional counseling','Start small practices','Build social connections','Focus on basics']; }
-	return { finalScore: Math.round(totalWeighted*100)/100, maxPossibleScore: Math.round(maxTotalWeighted*100)/100, percentage, mentalAgeCategory: category, recommendations, sectionBreakdown: sectionScores, questionTypeBreakdown, timestamp: new Date().toISOString(), totalQuestions: userAnswers.length, completionRate: calculateCompletionRate(userAnswers, questionnaireData) };
+	const modelId = process.env.OPENROUTER_MODEL || null;
+	return { finalScore: Math.round(totalWeighted*100)/100, maxPossibleScore: Math.round(maxTotalWeighted*100)/100, percentage, mentalAgeCategory: category, recommendations, sectionBreakdown: sectionScores, questionTypeBreakdown, evaluationMeta, timestamp: new Date().toISOString(), totalQuestions: userAnswers.length, completionRate: calculateCompletionRate(userAnswers, questionnaireData), scoringVersion: '2025-08-15-obj-inverted-v1', modelId };
 }
 
 function calculateCompletionRate(userAnswers, questionnaireData){
 	let total=0; Object.values(questionnaireData).forEach(s=>{ total += (s.Subjective?.length||0)+(s.Objective?.length||0); });
 	let answered=0; userAnswers.forEach(a=>{ if((a.type==='Subjective' && a.answer?.trim()) || (a.type==='Objective' && a.selectedOption)) answered++; });
 	return total>0? Math.round((answered/total)*100):0;
+}
+
+// Analyze section subjective question details to extract top missing criteria as drivers
+export function computeSectionDrivers(sectionScores){
+	const out={};
+	sectionScores.forEach(s=>{
+		const counts=new Map();
+		s.questionDetails?.forEach(q=>{
+			if(q.type==='Subjective' && Array.isArray(q.missingCriteria)){
+				q.missingCriteria.forEach(c=>{ counts.set(c,(counts.get(c)||0)+1); });
+			}
+		});
+		const sorted=[...counts.entries()].sort((a,b)=>b[1]-a[1]).slice(0,3).map(([c,_])=>c);
+		out[s.sectionName]=sorted;
+	});
+	return out;
 }

@@ -1,5 +1,5 @@
 // Updated import: use new modular scoring service (was ../utils/scoring.js)
-import { calculateScore, getSectionRecommendations } from "../services/scoring/aggregator.js";
+import { calculateScore, getSectionRecommendations, computeSectionDrivers } from "../services/scoring/aggregator.js";
 import mentalAgeQuestionnaire from "../data/question.js";
 import { apiResponce } from "../utils/ApiResponseHandler.js";
 import AssessmentResult from "../models/assessmentResultModel.js";
@@ -28,12 +28,13 @@ export const predictMentalHealth = async (req, res) => {
     }
 
     // Calculate the mental health score
-    const scoringResult = await calculateScore(userAnswers, mentalAgeQuestionnaire);
+  const scoringResult = await calculateScore(userAnswers, mentalAgeQuestionnaire);
+  const sectionDrivers = computeSectionDrivers(scoringResult.sectionBreakdown);
     // Get detailed section recommendations
     const sectionRecommendationsRaw = getSectionRecommendations(scoringResult.sectionBreakdown);
 
     // Map internal section names to display names
-    const sectionNameMap = {
+  const sectionNameMap = {
       CognitiveFunction: "Cognitive Function",
       EmotionalFlexibility: "Emotional Well-being",
       CommunityInvolvement: "Social Connections",
@@ -55,6 +56,12 @@ export const predictMentalHealth = async (req, res) => {
     });
 
     const sectionRecommendationsObj = {};
+    // Build a display-mapped version of drivers as well
+    const sectionDriversDisplay = {};
+    Object.entries(sectionDrivers).forEach(([internalName, drivers])=>{
+      const displayName = sectionNameMap[internalName] || internalName;
+      sectionDriversDisplay[displayName] = drivers;
+    });
     Object.entries(sectionRecommendationsRaw).forEach(([internalName, recs]) => {
       const displayName = sectionNameMap[internalName] || internalName;
       let priority = "low";
@@ -63,31 +70,34 @@ export const predictMentalHealth = async (req, res) => {
       if (section && section.percentage < 55) priority = "high";
       else if (section && section.percentage < 70) priority = "medium";
       // Always provide a recommendations array, fallback to a default if empty
+      const whyDrivers = (sectionDrivers[internalName] || []).slice(0,2);
       sectionRecommendationsObj[displayName] = {
         priority,
         recommendations: (Array.isArray(recs) && recs.length > 0)
           ? recs
           : [
               `Focus on improving this area for better overall well-being.`
-            ]
+            ],
+        why: whyDrivers
       };
     });
 
     // response data
-    const responseData = {
+  const responseData = {
       userId: userId || null,
       userName: userName || null,
       assessment: {
         ...scoringResult,
         sectionBreakdown: sectionBreakdownObj,
-        sectionRecommendations: sectionRecommendationsObj,
+    sectionRecommendations: sectionRecommendationsObj,
+    sectionDrivers: sectionDriversDisplay,
         // Add the question type breakdown to the response
         questionTypeBreakdown: scoringResult.questionTypeBreakdown || {
             subjective: { score: 0, maxScore: 0, percentage: 0, questionCount: 0 },
             objective: { score: 0, maxScore: 0, percentage: 0, questionCount: 0 }
         }
       },
-      message: generatePersonalizedMessage(scoringResult.percentage, scoringResult.mentalAgeCategory)
+      message: generatePersonalizedMessage(scoringResult.percentage, scoringResult.mentalAgeCategory, sectionDrivers)
     };
 
     // Save the assessment result to the database (only if DB is connected)
@@ -131,16 +141,30 @@ export const predictMentalHealth = async (req, res) => {
  * @param {string} category - Mental age category
  * @returns {string} Personalized message
  */
-function generatePersonalizedMessage(percentage, category) {
+function generatePersonalizedMessage(percentage, category, driversBySection = {}) {
   if (percentage >= 85) {
-    return "Excellent! You demonstrate remarkable mental resilience and wisdom. Your spiritual grounding, community connections, and emotional flexibility are inspiring. Continue to share your wisdom with others.";
+    return "Excellent! You demonstrate strong overall well-being. Maintain your current habits and keep balancing rest, relationships, and purpose.";
   } else if (percentage >= 70) {
-    return "Very good! You show strong mental well-being across most areas. Focus on the specific areas highlighted in your section breakdown to achieve even greater balance and fulfillment.";
+    const focus = topDriverSentence(driversBySection);
+    return `Very good! You show strong well-being across most areas.${focus ? ' Focus: ' + focus : ''}`;
   } else if (percentage >= 55) {
-    return "You're on a positive path! There are several areas where small improvements can make a significant difference in your overall well-being. Consider the personalized recommendations provided.";
+    const focus = topDriverSentence(driversBySection);
+    return `You’re on a positive path. Target a few areas to improve consistency.${focus ? ' Focus: ' + focus : ''}`;
   } else {
-    return "Thank you for taking this assessment. The results suggest focusing on fundamental aspects of mental well-being. Consider professional guidance alongside the recommendations provided.";
+    const focus = topDriverSentence(driversBySection);
+    return `Thanks for taking the assessment. Prioritize core routines and seek support as needed.${focus ? ' Focus: ' + focus : ''}`;
   }
+}
+
+function topDriverSentence(driversBySection){
+  // pick first section with drivers
+  for(const [sec, drivers] of Object.entries(driversBySection)){
+    if(Array.isArray(drivers) && drivers.length){
+      const list = drivers.slice(0,2).join(', ');
+      return `${sec}: ${list}`;
+    }
+  }
+  return '';
 }
 
 /**

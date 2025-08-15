@@ -479,6 +479,24 @@ body::before {
     transform: translateX(4px)
 }
 
+/* Disabled state for Next button (when validation fails) */
+.next-btn.disabled,
+.next-btn:disabled {
+    background: linear-gradient(135deg, #c7c9df, #b9b2c8);
+    color: #f1f5f9;
+    opacity: 0.7;
+    cursor: not-allowed;
+    box-shadow: none;
+    transform: none;
+    filter: grayscale(10%);
+}
+
+.next-btn.disabled:hover,
+.next-btn:disabled:hover {
+    box-shadow: none;
+    transform: none;
+}
+
 .error-message {
     color: #ef4444;
     font-size: 14px;

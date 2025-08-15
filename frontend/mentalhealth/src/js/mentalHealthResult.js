@@ -188,6 +188,23 @@ function displayResults(data) {
     // Update message
     document.getElementById("scoreMessage").textContent = data.message;
 
+    // Show evaluation summary near header (LLM vs Fallback and modelId)
+    const meta = assessment.evaluationMeta || {};
+    const methodUsage = meta.subjectiveMethodUsage || {};
+    const evalSummaryEl = document.getElementById('evaluationSummary');
+    if(evalSummaryEl){
+        const parts = [];
+        if(typeof methodUsage.llm === 'number' || typeof methodUsage.fallback === 'number'){
+            parts.push(`Subjective: LLM ${methodUsage.llm||0}, Fallback ${methodUsage.fallback||0}`);
+        }
+        if(meta.timing && typeof meta.timing.averageTimeSec === 'number'){
+            parts.push(`Avg time/question: ${meta.timing.averageTimeSec}s`);
+        }
+        if(assessment.modelId){ parts.push(`Model: ${assessment.modelId}`); }
+        evalSummaryEl.textContent = parts.join(' | ');
+        evalSummaryEl.style.display = parts.length? 'block':'none';
+    }
+
     // Update participant name if available
     displayParticipantInfo(data);
 
@@ -239,22 +256,71 @@ function displaySectionBreakdown(sections) {
     Object.entries(sections).forEach(([sectionName, data]) => {
         const sectionDiv = document.createElement("div");
         sectionDiv.className = "section-item";
+        const detailsId = `details_${sectionName.replace(/\s+/g,'_')}`;
         sectionDiv.innerHTML = `
             <div class="section-name">${sectionName}</div>
             <div class="section-score">
-                <span class="section-percentage">${Math.round(
-            data.percentage
-        )}%</span>
-                <span style="color: #64748b; font-size: 14px;">${data.score}/${data.maxScore
-            }</span>
+                <span class="section-percentage">${Math.round(data.percentage)}%</span>
+                <span style="color: #64748b; font-size: 14px;">${data.score}/${data.maxScore}</span>
             </div>
             <div class="section-bar">
-                <div class="section-fill" style="width: 0%;" data-width="${data.percentage
-            }%"></div>
+                <div class="section-fill" style="width: 0%;" data-width="${data.percentage}%"></div>
+            </div>
+            <button class="section-details-toggle" data-target="#${detailsId}" style="margin-top:8px;background:#eef2ff;color:#4338ca;border:none;padding:8px 12px;border-radius:8px;font-weight:600;cursor:pointer;">
+                View details
+            </button>
+            <div id="${detailsId}" class="section-details" style="display:none;margin-top:10px;border-top:1px dashed #e5e7eb;padding-top:10px;">
+                ${renderSectionDetails(data)}
             </div>
         `;
         grid.appendChild(sectionDiv);
     });
+
+    // Wire up toggles
+    grid.querySelectorAll('.section-details-toggle').forEach(btn=>{
+        btn.addEventListener('click',()=>{
+            const sel = btn.getAttribute('data-target');
+            const panel = grid.querySelector(sel);
+            if(!panel) return;
+            const isOpen = panel.style.display !== 'none';
+            panel.style.display = isOpen ? 'none' : 'block';
+            btn.textContent = isOpen ? 'View details' : 'Hide details';
+        });
+    });
+}
+
+function renderSectionDetails(sectionData){
+    const items = sectionData.questionDetails || [];
+    if(!items.length) return '<div style="color:#64748b;">No question-level details available.</div>';
+    return `
+        <ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:8px;">
+            ${items.map(q=>{
+                const base = `<div style=\"font-weight:600;color:#374151;\">${escapeHtml(q.question||'')}</div>
+                              <div style=\"font-size:12px;color:#6b7280;\">${q.type} • ${q.score}/${q.maxScore}${q.percentage?` • ${q.percentage}%`:''}</div>`;
+        if(q.type==='Objective'){
+                    return `<li style=\"background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:10px;\">${base}
+                        <div style=\"font-size:12px;color:#374151;margin-top:4px;\">Selected: <b>${escapeHtml(q.selectedOption||'-')}</b></div>
+            ${q.details?`<div style=\"font-size:12px;color:#64748b;margin-top:2px;\">${escapeHtml(q.details)}</div>`:''}
+            ${typeof q.timeTakenSec==='number'?`<div style=\"font-size:11px;color:#6b7280;margin-top:2px;\">Time: ${q.timeTakenSec}s</div>`:''}
+                    </li>`;
+                } else {
+                    const matched = Array.isArray(q.matchedCriteria)?q.matchedCriteria.length:0;
+                    const missing = Array.isArray(q.missingCriteria)?q.missingCriteria.length:0;
+                    return `<li style=\"background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:10px;\">${base}
+                        <div style=\"font-size:12px;color:#374151;margin-top:4px;\">Criteria matched: <b>${matched}</b>${missing?` (missing ${missing})`:''}</div>
+            ${q.explanation?`<div style=\"font-size:12px;color:#64748b;margin-top:2px;\">${escapeHtml(q.explanation)}</div>`:''}
+                    ${q.method?`<div style=\"font-size:11px;color:#6b7280;margin-top:2px;\">Method: ${escapeHtml(q.method)}</div>`:''}
+            ${q.confidence?`<div style=\"font-size:11px;color:#6b7280;margin-top:2px;\">Confidence: ${q.confidence==='deterministic'?'High (deterministic)': 'Variable (LLM-based)'}</div>`:''}
+            ${typeof q.timeTakenSec==='number'?`<div style=\"font-size:11px;color:#6b7280;margin-top:2px;\">Time: ${q.timeTakenSec}s</div>`:''}
+                    </li>`;
+                }
+            }).join('')}
+        </ul>
+    `;
+}
+
+function escapeHtml(str){
+    return String(str).replace(/[&<>"]/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[s]));
 }
 
 function displayRecommendations(recommendations) {
@@ -280,6 +346,7 @@ function displayRecommendations(recommendations) {
             .map((rec) => `<span class="action-tag">${rec}</span>`)
             .join("");
 
+        const why = (data.why && data.why.length)? `<div style="font-size:12px;color:#64748b;margin-top:6px;">Why: ${data.why.join(', ')}</div>` : '';
         card.innerHTML = `
             <div class="recommendation-title">
                 <i class="fas ${priorityIcon}"></i>
@@ -291,6 +358,7 @@ function displayRecommendations(recommendations) {
             <div class="recommendation-actions">
                 ${actionsHtml}
             </div>
+            ${why}
         `;
         grid.appendChild(card);
     });
@@ -396,9 +464,25 @@ function calculateSubjectiveObjectiveScores(sectionBreakdown) {
 }
 
 function updateScoreDisplay(index) {
+    // Validate index
+    if (typeof index !== 'number' || index < 0 || index > 2) {
+        console.warn('Invalid index for updateScoreDisplay:', index);
+        return;
+    }
+    
     const overallPercentage = resultsData.assessment.percentage;
-    const subjectivePercentage = resultsData.assessment.questionTypeBreakdown.subjective.percentage;
-    const objectivePercentage = resultsData.assessment.questionTypeBreakdown.objective.percentage;
+    
+    // Get subjective and objective percentages 
+    let subjectivePercentage, objectivePercentage;
+    if (resultsData.assessment.questionTypeBreakdown) {
+        subjectivePercentage = resultsData.assessment.questionTypeBreakdown.subjective.percentage;
+        objectivePercentage = resultsData.assessment.questionTypeBreakdown.objective.percentage;
+    } else {
+        // Fallback calculation
+        const scores = calculateSubjectiveObjectiveScores(resultsData.assessment.sectionBreakdown);
+        subjectivePercentage = scores.subjective.percentage;
+        objectivePercentage = scores.objective.percentage;
+    }
     
     const labels = ["Overall Score", "Subjective Score", "Objective Score"];
     const values = [overallPercentage, subjectivePercentage, objectivePercentage];
@@ -407,17 +491,53 @@ function updateScoreDisplay(index) {
     const scoreNumberElement = document.getElementById("scoreNumber");
     const scoreLabelElement = document.querySelector(".score-label");
 
-    scoreNumberElement.textContent = `${values[index]}%`;
-    scoreLabelElement.textContent = labels[index];
-    scoreNumberElement.style.color = colors[index];
-    scoreLabelElement.style.color = colors[index];
+    // Ensure we have valid values
+    if (isNaN(values[index])) {
+        console.warn('Invalid value for index', index, ':', values[index]);
+        return;
+    }
+
+    // Animate the score change
+    if (scoreNumberElement && scoreLabelElement) {
+        scoreNumberElement.style.transform = 'scale(0.9)';
+        scoreLabelElement.style.transform = 'scale(0.9)';
+        scoreNumberElement.style.opacity = '0.8';
+        scoreLabelElement.style.opacity = '0.8';
+        
+        setTimeout(() => {
+            scoreNumberElement.textContent = `${Math.round(values[index])}%`;
+            scoreLabelElement.textContent = labels[index];
+            scoreNumberElement.style.color = colors[index];
+            scoreLabelElement.style.color = colors[index];
+            
+            scoreNumberElement.style.transform = 'scale(1)';
+            scoreLabelElement.style.transform = 'scale(1)';
+            scoreNumberElement.style.opacity = '1';
+            scoreLabelElement.style.opacity = '1';
+        }, 120);
+    }
 
     // Update the chart to pop out the selected segment
-    if (scoreChart) {
+    if (scoreChart && scoreChart.data && scoreChart.data.datasets[0]) {
         scoreChart.data.datasets[0].offset = [0, 0, 0];
-        scoreChart.data.datasets[0].offset[index] = 20; // Increased offset for better visibility
-        scoreChart.update();
+        scoreChart.data.datasets[0].offset[index] = 25;
+        scoreChart.update('none');
     }
+}
+
+function updateLegendActiveState(activeIndex) {
+    const legendItems = document.querySelectorAll('.chart-legend > div');
+    legendItems.forEach((item, index) => {
+        if (index === activeIndex) {
+            item.style.background = 'rgba(102, 126, 234, 0.1)';
+            item.style.borderColor = 'rgba(102, 126, 234, 0.3)';
+            item.style.transform = 'translateY(-2px) scale(1.05)';
+        } else {
+            item.style.background = 'rgba(255, 255, 255, 0.9)';
+            item.style.borderColor = 'rgba(0, 0, 0, 0.08)';
+            item.style.transform = 'translateY(0) scale(1)';
+        }
+    });
 }
 
 // Enhanced chart creation function
@@ -446,7 +566,59 @@ function createScoreChart() {
             scoreChart.destroy();
         }
         
-        // Chart configuration
+        // Clean up any existing custom tooltips
+        const existingTooltip = document.getElementById('chart-tooltip-custom');
+        if (existingTooltip) {
+            existingTooltip.remove();
+        }
+        const oldTooltip = document.getElementById('chartjs-tooltip');
+        if (oldTooltip) {
+            oldTooltip.remove();
+        }
+        
+        // Enhanced color scheme with gradients
+        const colors = {
+            overall: {
+                background: "rgba(102, 126, 234, 0.85)",
+                border: "rgba(102, 126, 234, 1)",
+                hover: "rgba(102, 126, 234, 0.95)"
+            },
+            subjective: {
+                background: "rgba(255, 193, 7, 0.85)",
+                border: "rgba(255, 193, 7, 1)",
+                hover: "rgba(255, 193, 7, 0.95)"
+            },
+            objective: {
+                background: "rgba(40, 167, 69, 0.85)",
+                border: "rgba(40, 167, 69, 1)",
+                hover: "rgba(40, 167, 69, 0.95)"
+            }
+        };
+        
+        // Detect mobile screen size and adjust dimensions
+        const isMobile = window.innerWidth <= 768;
+        const isSmallMobile = window.innerWidth <= 480;
+        
+        // Set responsive canvas size
+        const canvas = document.getElementById("scoreChart");
+        if (isSmallMobile) {
+            canvas.style.width = '200px';
+            canvas.style.height = '200px';
+            canvas.width = 200;
+            canvas.height = 200;
+        } else if (isMobile) {
+            canvas.style.width = '240px';
+            canvas.style.height = '240px';
+            canvas.width = 240;
+            canvas.height = 240;
+        } else {
+            canvas.style.width = '320px';
+            canvas.style.height = '320px';
+            canvas.width = 320;
+            canvas.height = 320;
+        }
+        
+        // Chart configuration with enhanced styling
         scoreChart = new Chart(ctx, {
             type: "doughnut",
             data: {
@@ -454,44 +626,285 @@ function createScoreChart() {
                 datasets: [{
                     data: [overallPercentage, subjectivePercentage, objectivePercentage],
                     backgroundColor: [
-                        "rgba(102, 126, 234, 0.8)",  // Blue for overall
-                        "rgba(255, 193, 7, 0.8)",    // Yellow for subjective
-                        "rgba(40, 167, 69, 0.8)"     // Green for objective
+                        colors.overall.background,
+                        colors.subjective.background,
+                        colors.objective.background
                     ],
                     borderColor: [
-                        "rgba(102, 126, 234, 1)",
-                        "rgba(255, 193, 7, 1)",
-                        "rgba(40, 167, 69, 1)"
+                        colors.overall.border,
+                        colors.subjective.border,
+                        colors.objective.border
                     ],
-                    borderWidth: 4, // Increased border width
-                    cutout: "65%", // Slightly reduced cutout for better visibility
-                    offset: [20, 0, 0], // Increased initial offset
-                    hoverBorderWidth: 6, // Increased hover border width
-                    hoverOffset: 15 // Increased hover offset
+                    hoverBackgroundColor: [
+                        colors.overall.hover,
+                        colors.subjective.hover,
+                        colors.objective.hover
+                    ],
+                    borderWidth: 3,
+                    cutout: "68%",
+                    offset: [25, 0, 0],
+                    hoverBorderWidth: 4,
+                    hoverOffset: 25,
+                    borderRadius: 6,
+                    spacing: 3,
+                    // Ensure minimum segment size for better hit detection
+                    minAngle: 10
                 }]
             },
             options: {
-                responsive: true,
-                maintainAspectRatio: true,
+                responsive: false,
+                maintainAspectRatio: false,
+                aspectRatio: 1,
+                layout: {
+                    padding: 0
+                },
+                elements: {
+                    arc: {
+                        hoverBorderWidth: 5,
+                        borderAlign: 'inner'
+                    }
+                },
+                interaction: {
+                    intersect: false,
+                    mode: 'nearest'
+                },
                 plugins: {
                     legend: {
                         display: false
                     },
                     tooltip: {
-                        enabled: false
+                        enabled: false,
+                        filter: function(tooltipItem) {
+                            // Ensure all segments are equally detectable
+                            return true;
+                        },
+                        external: function(context) {
+                            // Custom tooltip to ensure it appears above everything
+                            const tooltip = context.tooltip;
+                            
+                            // Get or create tooltip element
+                            let tooltipEl = document.getElementById('chart-tooltip-custom');
+                            if (!tooltipEl) {
+                                tooltipEl = document.createElement('div');
+                                tooltipEl.id = 'chart-tooltip-custom';
+                                tooltipEl.style.cssText = `
+                                    position: fixed;
+                                    pointer-events: none;
+                                    z-index: 999999;
+                                    transition: all 0.15s ease-out;
+                                    opacity: 0;
+                                    visibility: hidden;
+                                    will-change: transform, opacity;
+                                `;
+                                document.body.appendChild(tooltipEl);
+                            }
+                            
+                            // Hide tooltip if no data
+                            if (tooltip.opacity === 0) {
+                                tooltipEl.style.opacity = '0';
+                                tooltipEl.style.visibility = 'hidden';
+                                return;
+                            }
+                            
+                            // Build tooltip content with responsive styling
+                            if (tooltip.body) {
+                                const bodyLines = tooltip.body.map(b => b.lines[0]);
+                                const colors = tooltip.labelColors[0];
+                                const isMobile = window.innerWidth <= 768;
+                                
+                                tooltipEl.innerHTML = `
+                                    <div style="
+                                        background: rgba(255, 255, 255, 0.98);
+                                        border: 2px solid rgba(102, 126, 234, 0.3);
+                                        border-radius: ${isMobile ? '16px' : '12px'};
+                                        padding: ${isMobile ? '16px 20px' : '12px 16px'};
+                                        box-shadow: 0 ${isMobile ? '12px' : '8px'} 32px rgba(0, 0, 0, ${isMobile ? '0.3' : '0.2'});
+                                        backdrop-filter: blur(10px);
+                                        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+                                        white-space: nowrap;
+                                        max-width: ${isMobile ? '280px' : '220px'};
+                                        word-wrap: break-word;
+                                    ">
+                                        <div style="
+                                            display: flex;
+                                            align-items: center;
+                                            gap: ${isMobile ? '10px' : '8px'};
+                                            font-weight: 600;
+                                            color: #374151;
+                                            font-size: ${isMobile ? '16px' : '14px'};
+                                            line-height: 1.3;
+                                        ">
+                                            <div style="
+                                                width: ${isMobile ? '14px' : '12px'};
+                                                height: ${isMobile ? '14px' : '12px'};
+                                                background: ${colors.backgroundColor};
+                                                border: 1px solid ${colors.borderColor};
+                                                border-radius: 3px;
+                                                flex-shrink: 0;
+                                            "></div>
+                                            <span style="flex: 1; min-width: 0;">${bodyLines[0]}</span>
+                                        </div>
+                                    </div>
+                                `;
+                            }
+                            
+                            // Position tooltip with improved logic
+                            const canvas = context.chart.canvas;
+                            const canvasRect = canvas.getBoundingClientRect();
+                            
+                            // Get the actual mouse coordinates from the event
+                            const chartEvent = context.chart.lastHoverEvent;
+                            let mouseX = tooltip.caretX;
+                            let mouseY = tooltip.caretY;
+                            
+                            // If we have the actual event, use those coordinates for better accuracy
+                            if (chartEvent && chartEvent.native) {
+                                const rect = canvas.getBoundingClientRect();
+                                mouseX = chartEvent.native.clientX - rect.left;
+                                mouseY = chartEvent.native.clientY - rect.top;
+                            }
+                            
+                            // Detect mobile/tablet for different positioning strategy
+                            const isMobile = window.innerWidth <= 768;
+                            const isSmallMobile = window.innerWidth <= 480;
+                            
+                            // Get tooltip dimensions first
+                            tooltipEl.style.opacity = '1';
+                            tooltipEl.style.visibility = 'visible';
+                            tooltipEl.style.position = 'fixed';
+                            
+                            // Allow the tooltip to render to get accurate dimensions
+                            const tooltipRect = tooltipEl.getBoundingClientRect();
+                            const tooltipWidth = tooltipRect.width || 150;
+                            const tooltipHeight = tooltipRect.height || 40;
+                            
+                            // Calculate base position relative to viewport
+                            let left = canvasRect.left + mouseX;
+                            let top = canvasRect.top + mouseY;
+                            
+                            // Calculate center of canvas
+                            const centerX = canvasRect.left + canvasRect.width / 2;
+                            const centerY = canvasRect.top + canvasRect.height / 2;
+                            
+                            // Determine which segment we're hovering based on angle from center
+                            const angleFromCenter = Math.atan2(mouseY - canvasRect.height / 2, mouseX - canvasRect.width / 2);
+                            const distanceFromCenter = Math.sqrt(Math.pow(mouseX - canvasRect.width / 2, 2) + Math.pow(mouseY - canvasRect.height / 2, 2));
+                            
+                            if (isMobile) {
+                                // Mobile positioning: place tooltip at bottom of screen for better visibility
+                                left = centerX - tooltipWidth / 2;
+                                top = window.innerHeight - tooltipHeight - 20;
+                                
+                                // Ensure it doesn't go off screen horizontally
+                                left = Math.max(10, Math.min(left, window.innerWidth - tooltipWidth - 10));
+                            } else {
+                                // Desktop positioning: smart placement around the chart
+                                const radius = Math.min(canvasRect.width, canvasRect.height) / 2;
+                                
+                                if (distanceFromCenter < radius * 0.8) {
+                                    // Close to center - position tooltip outside the chart area
+                                    const angle = angleFromCenter;
+                                    const offsetDistance = radius + 40;
+                                    
+                                    left = centerX + Math.cos(angle) * offsetDistance - tooltipWidth / 2;
+                                    top = centerY + Math.sin(angle) * offsetDistance - tooltipHeight / 2;
+                                } else {
+                                    // On the outer edge - position tooltip just outside the segment
+                                    const offsetX = mouseX > canvasRect.width / 2 ? 20 : -tooltipWidth - 20;
+                                    const offsetY = mouseY > canvasRect.height / 2 ? 20 : -tooltipHeight - 20;
+                                    
+                                    left = left + offsetX;
+                                    top = top + offsetY;
+                                }
+                                
+                                // Enhanced viewport bounds checking for desktop
+                                const padding = 15;
+                                const maxLeft = window.innerWidth - tooltipWidth - padding;
+                                const maxTop = window.innerHeight - tooltipHeight - padding;
+                                
+                                left = Math.max(padding, Math.min(left, maxLeft));
+                                top = Math.max(padding, Math.min(top, maxTop));
+                                
+                                // Additional check to avoid overlapping with chart center
+                                const tooltipCenterX = left + tooltipWidth / 2;
+                                const tooltipCenterY = top + tooltipHeight / 2;
+                                const distanceFromChartCenter = Math.sqrt(
+                                    Math.pow(tooltipCenterX - centerX, 2) + Math.pow(tooltipCenterY - centerY, 2)
+                                );
+                                
+                                if (distanceFromChartCenter < radius + 30) {
+                                    // Push tooltip further away if still too close to center
+                                    const pushAngle = Math.atan2(tooltipCenterY - centerY, tooltipCenterX - centerX);
+                                    const pushDistance = radius + 50;
+                                    
+                                    left = centerX + Math.cos(pushAngle) * pushDistance - tooltipWidth / 2;
+                                    top = centerY + Math.sin(pushAngle) * pushDistance - tooltipHeight / 2;
+                                    
+                                    // Re-apply bounds checking
+                                    left = Math.max(padding, Math.min(left, maxLeft));
+                                    top = Math.max(padding, Math.min(top, maxTop));
+                                }
+                            }
+                            
+                            // Apply final position with smooth transition
+                            tooltipEl.style.left = Math.round(left) + 'px';
+                            tooltipEl.style.top = Math.round(top) + 'px';
+                        }
                     }
                 },
-                onHover: (event, activeElements) => {
+                animation: {
+                    animateRotate: true,
+                    animateScale: true,
+                    duration: 1500,
+                    easing: 'easeInOutQuart'
+                },
+                onHover: (event, activeElements, chart) => {
+                    // Store the hover event for tooltip positioning
+                    chart.lastHoverEvent = event;
+                    
+                    // Change cursor on hover
+                    chart.canvas.style.cursor = activeElements.length > 0 ? 'pointer' : 'default';
+                    
                     if (activeElements.length > 0) {
-                        updateScoreDisplay(activeElements[0].index);
+                        const hoveredIndex = activeElements[0].index;
+                        
+                        // Only update if we're hovering a different segment
+                        if (hoveredIndex !== chart.lastHoveredIndex) {
+                            chart.lastHoveredIndex = hoveredIndex;
+                            updateScoreDisplay(hoveredIndex);
+                            
+                            // Smooth animation for chart segment offset
+                            chart.data.datasets[0].offset = [0, 0, 0];
+                            chart.data.datasets[0].offset[hoveredIndex] = 30;
+                            chart.update('none');
+                            
+                            // Update legend active state for hovered item
+                            updateLegendActiveState(hoveredIndex);
+                        }
                     } else {
+                        // Only reset if we were previously hovering something
+                        if (chart.lastHoveredIndex !== undefined && chart.lastHoveredIndex !== activeScoreIndex) {
+                            chart.lastHoveredIndex = undefined;
+                            
+                            // Reset to active score when not hovering
+                            updateScoreDisplay(activeScoreIndex);
+                            chart.data.datasets[0].offset = [0, 0, 0];
+                            chart.data.datasets[0].offset[activeScoreIndex] = 25;
+                            chart.update('none');
+                            updateLegendActiveState(activeScoreIndex);
+                        }
+                    }
+                },
+                onClick: (event, activeElements) => {
+                    if (activeElements.length > 0) {
+                        activeScoreIndex = activeElements[0].index;
                         updateScoreDisplay(activeScoreIndex);
                     }
                 }
             }
         });
         
-        // Add custom legend
+        // Add custom legend with enhanced styling
         createCustomLegend(overallPercentage, subjectivePercentage, objectivePercentage);
         updateScoreDisplay(activeScoreIndex);
         
@@ -505,18 +918,11 @@ function createScoreChart() {
 function createCustomLegend(overallPercentage, subjectivePercentage, objectivePercentage) {
     const legendContainer = document.createElement("div");
     legendContainer.className = "chart-legend";
-    legendContainer.style.cssText = `
-        display: flex;
-        justify-content: center;
-        gap: 15px;
-        margin-top: 20px;
-        flex-wrap: wrap;
-    `;
     
     const legendItems = [
-        { label: "Overall", percentage: overallPercentage, color: "#667eea" },
-        { label: "Subjective", percentage: subjectivePercentage, color: "#ffc107" },
-        { label: "Objective", percentage: objectivePercentage, color: "#28a745" }
+        { label: "Overall", percentage: overallPercentage, color: "#667eea", icon: "🎯" },
+        { label: "Subjective", percentage: subjectivePercentage, color: "#ffc107", icon: "💭" },
+        { label: "Objective", percentage: objectivePercentage, color: "#28a745", icon: "📊" }
     ];
     
     legendItems.forEach((item, index) => {
@@ -524,48 +930,108 @@ function createCustomLegend(overallPercentage, subjectivePercentage, objectivePe
         legendItem.style.cssText = `
             display: flex;
             align-items: center;
-            gap: 8px;
-            padding: 8px 12px;
-            background: rgba(255, 255, 255, 0.8);
-            border-radius: 8px;
-            border: 1px solid rgba(0, 0, 0, 0.1);
+            gap: 12px;
+            padding: 14px 20px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 25px;
+            border: 2px solid rgba(0, 0, 0, 0.08);
             cursor: pointer;
-            transition: all 0.2s ease;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            font-weight: 600;
+            color: #374151;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            backdrop-filter: blur(10px);
+            position: relative;
+            overflow: hidden;
         `;
         
         legendItem.innerHTML = `
             <div style="
-                width: 12px;
-                height: 12px;
+                width: 16px;
+                height: 16px;
                 background: ${item.color};
                 border-radius: 50%;
-            "></div>
+                flex-shrink: 0;
+                box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+                position: relative;
+            ">
+                <div style="
+                    position: absolute;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                    font-size: 8px;
+                    line-height: 1;
+                ">${item.icon}</div>
+            </div>
             <span style="
-                font-size: 12px;
+                font-size: 13px;
                 font-weight: 600;
                 color: #374151;
+                white-space: nowrap;
             ">${item.label}: ${item.percentage}%</span>
         `;
         
-        // Add hover effect
-        legendItem.addEventListener('mouseenter', () => {
-            legendItem.style.backgroundColor = 'rgba(255, 255, 255, 1)';
-            legendItem.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.1)';
-        });
-        
-        legendItem.addEventListener('mouseleave', () => {
-            legendItem.style.backgroundColor = 'rgba(255, 255, 255, 0.8)';
-            legendItem.style.boxShadow = 'none';
-        });
-
-        // Add click listener to update the active score
-        legendItem.addEventListener('click', () => {
+        // Add ripple effect on click
+        legendItem.addEventListener('click', (e) => {
+            // Create ripple effect
+            const ripple = document.createElement('div');
+            const rect = legendItem.getBoundingClientRect();
+            const size = Math.max(rect.width, rect.height);
+            ripple.style.cssText = `
+                position: absolute;
+                left: ${e.clientX - rect.left - size/2}px;
+                top: ${e.clientY - rect.top - size/2}px;
+                width: ${size}px;
+                height: ${size}px;
+                background: rgba(102, 126, 234, 0.3);
+                border-radius: 50%;
+                transform: scale(0);
+                animation: ripple 0.6s linear;
+                pointer-events: none;
+            `;
+            
+            legendItem.appendChild(ripple);
+            setTimeout(() => ripple.remove(), 600);
+            
             activeScoreIndex = index;
             updateScoreDisplay(activeScoreIndex);
         });
         
+        // Enhanced hover effects
+        legendItem.addEventListener('mouseenter', () => {
+            legendItem.style.background = 'rgba(255, 255, 255, 1)';
+            legendItem.style.boxShadow = '0 8px 24px rgba(102, 126, 234, 0.15)';
+            legendItem.style.transform = 'translateY(-2px) scale(1.02)';
+            legendItem.style.borderColor = 'rgba(102, 126, 234, 0.2)';
+        });
+        
+        legendItem.addEventListener('mouseleave', () => {
+            if (activeScoreIndex !== index) {
+                legendItem.style.background = 'rgba(255, 255, 255, 0.9)';
+                legendItem.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.05)';
+                legendItem.style.transform = 'translateY(0) scale(1)';
+                legendItem.style.borderColor = 'rgba(0, 0, 0, 0.08)';
+            }
+        });
+        
         legendContainer.appendChild(legendItem);
     });
+    
+    // Add CSS animation for ripple effect
+    if (!document.querySelector('#ripple-animation')) {
+        const style = document.createElement('style');
+        style.id = 'ripple-animation';
+        style.textContent = `
+            @keyframes ripple {
+                to {
+                    transform: scale(2);
+                    opacity: 0;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+    }
     
     // Insert legend after the chart container
     const chartContainer = document.querySelector(".score-circle");
@@ -578,6 +1044,9 @@ function createCustomLegend(overallPercentage, subjectivePercentage, objectivePe
         
         chartContainer.parentNode.insertBefore(legendContainer, chartContainer.nextSibling);
     }
+    
+    // Set initial active state
+    updateLegendActiveState(activeScoreIndex);
 }
 
 // Update the main initialization function
@@ -1037,7 +1506,7 @@ function sendEmail() {
         return;
     }
 
-    fetch('http://localhost:8000/api/email/send-results', {
+    fetch(`${BASE_API_URL}/api/email/send-results`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -1112,5 +1581,16 @@ document.addEventListener("DOMContentLoaded", function () {
         if (event.target === modal) {
             closeModal();
         }
+    });
+    
+    // Handle window resize for responsive chart
+    let resizeTimeout;
+    window.addEventListener("resize", function() {
+        clearTimeout(resizeTimeout);
+        resizeTimeout = setTimeout(function() {
+            if (scoreChart) {
+                createScoreChart(); // Recreate chart with new dimensions
+            }
+        }, 250);
     });
 });

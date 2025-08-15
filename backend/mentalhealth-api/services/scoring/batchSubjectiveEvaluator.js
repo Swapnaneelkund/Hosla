@@ -1,4 +1,4 @@
-import { evaluateSubjectiveAnswer } from './subjectiveEvaluator.js';
+import { evaluateSubjectiveAnswer, getCachedSubjectiveLLM, setCachedSubjectiveLLM } from './subjectiveEvaluator.js';
 
 // Batch subjective evaluation utility
 function localFallback(answerObj, criteria, weight){
@@ -19,7 +19,17 @@ export async function batchEvaluateSubjectiveAnswers(items){
   }
   const model = process.env.OPENROUTER_MODEL || 'deepseek/deepseek-r1-0528:free';
   const compact = items.map(i=>({ question:i.question, criteria:i.criteria, answer:i.answer, weight:i.weight }));
-  const payload = { model, messages:[{ role:'user', content:`Evaluate these subjective answers. Return JSON array only. Schema element: {score,maxScore,matchedCriteria,missingCriteria,explanation}. Input:${JSON.stringify(compact)}` }], response_format:{ type:'json_object'} };
+
+  // Check cache first and split into hits/misses
+  const results = new Array(items.length);
+  const misses = [];
+  const missIndexes = [];
+  compact.forEach((it, idx)=>{
+    const cached = getCachedSubjectiveLLM(it.question, it.criteria, it.answer, it.weight, model);
+    if(cached){ results[idx] = cached; } else { misses.push(it); missIndexes.push(idx); }
+  });
+  if(misses.length===0){ return results; }
+  const payload = { model, messages:[{ role:'user', content:`Evaluate these subjective answers. Return JSON array only. Schema element: {score,maxScore,matchedCriteria,missingCriteria,explanation}. Input:${JSON.stringify(misses)}` }], response_format:{ type:'json_object'} };
   try {
     const res = await fetch('https://openrouter.ai/api/v1/chat/completions',{ method:'POST', headers:{ Authorization:`Bearer ${API_KEY}`, 'Content-Type':'application/json'}, body: JSON.stringify(payload)});
     if(!res.ok) throw new Error('Bad status '+res.status);
@@ -27,14 +37,23 @@ export async function batchEvaluateSubjectiveAnswers(items){
     const raw = data.choices?.[0]?.message?.content;
     const parsed = JSON.parse(raw);
     const arr = Array.isArray(parsed) ? parsed : parsed.results;
-    if(!Array.isArray(arr) || arr.length !== items.length) throw new Error('Length mismatch');
-    return arr.map((r,idx)=>({
-      score: Number(r.score)||0,
-      maxScore: Number(r.maxScore)||items[idx].weight,
-      matchedCriteria: r.matchedCriteria||[],
-      missingCriteria: r.missingCriteria||[],
-      explanation: r.explanation || 'LLM batch evaluation.'
-    }));
+    if(!Array.isArray(arr) || arr.length !== misses.length) throw new Error('Length mismatch');
+    arr.forEach((r, i)=>{
+      const idx = missIndexes[i];
+      const src = items[idx];
+      const val = {
+        score: Number(r.score)||0,
+        maxScore: Number(r.maxScore)||src.weight,
+        matchedCriteria: r.matchedCriteria||[],
+        missingCriteria: r.missingCriteria||[],
+        explanation: r.explanation || 'LLM batch evaluation.',
+        method: 'llm',
+        confidence: 'variable'
+      };
+      results[idx] = val;
+      setCachedSubjectiveLLM(src.question, src.criteria, src.answer, src.weight, model, val);
+    });
+    return results;
   } catch(e){
     return Promise.all(items.map(it=>localFallback({ question: it.question, answer: it.answer }, it.criteria, it.weight)));
   }
