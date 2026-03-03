@@ -7,7 +7,8 @@ dotenv.config();
 // Schema for environment variables
 const envSchema = z.object({
   PORT: z.string().optional().default('8000'),
-  mongodbURI: z.string().optional(), // required only in production unless SKIP_DB=true
+  mongodbURI: z.string().optional(), // preferred key in this project
+  MONGODB_URI: z.string().optional(), // fallback for common naming
   SKIP_DB: z.enum(['true','false']).optional().default('false'),
   OPENROUTER_API_KEY: z.string().optional(),
   OPENROUTER_MODEL: z.string().optional().default('deepseek/deepseek-r1-0528:free'),
@@ -28,7 +29,11 @@ if (!parsed.success) {
   if (process.env.NODE_ENV === 'production') process.exit(1);
 }
 
-const env = parsed.success ? parsed.data : process.env;
+const rawEnv = parsed.success ? parsed.data : process.env;
+const env = {
+  ...rawEnv,
+  mongodbURI: rawEnv.mongodbURI || rawEnv.MONGODB_URI
+};
 
 // Enforce mongodbURI only in production if DB not skipped
 if (env.NODE_ENV === 'production') {

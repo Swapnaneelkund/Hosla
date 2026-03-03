@@ -20,14 +20,18 @@ if (env.mongodbURI) {
 }
 
 // CORS: support comma-separated list in CORS_ORIGIN (e.g., "https://app.example.com, http://localhost:5500")
+const normalizeOrigin = (value) => (value || '').trim().replace(/\/$/, '');
 const allowedOrigins = (env.CORS_ORIGIN || "http://127.0.0.1:5500")
   .split(',')
-  .map(o => o.trim())
+  .map(normalizeOrigin)
   .filter(Boolean);
 
 app.use(cors({
   origin: (origin, cb) => {
-    if (!origin || allowedOrigins.includes(origin)) return cb(null, true);
+    const normalizedOrigin = normalizeOrigin(origin);
+    const isLocalDevOrigin = env.NODE_ENV !== 'production' && /^https?:\/\/(127\.0\.0\.1|localhost)(:\d+)?$/.test(normalizedOrigin);
+    if (!origin || allowedOrigins.includes(normalizedOrigin) || isLocalDevOrigin) return cb(null, true);
+    logger.warn(`CORS blocked for origin: ${origin}. Allowed origins: ${allowedOrigins.join(', ')}`);
     return cb(new Error('CORS not allowed'), false);
   },
   credentials: true,
