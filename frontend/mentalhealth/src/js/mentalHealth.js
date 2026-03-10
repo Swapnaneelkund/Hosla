@@ -24,6 +24,8 @@ let startTime = null;
 let selectedLanguage = "en";
 let userInfo = { createdAt: new Date().toISOString(), data: {}, responses: [] };
 let previousAnswers = {};
+// Unique session ID to group all responses from one assessment attempt
+let assessmentSessionId = crypto.randomUUID();
 document.addEventListener("change", function (e) {
   if (e.target.type === "radio") {
     const groupName = e.target.name;
@@ -435,6 +437,12 @@ nextBtn.addEventListener("click", () => {
     answerObj.selectedOption = q.options && q.options.find(opt => opt.text[selectedLanguage] === selectedAnswer || opt.text.en === selectedAnswer)?.key || selectedAnswer;
   }
   userInfo.responses.push(answerObj);
+  // Fire-and-forget: save this individual response for ML training data
+  saveResponseToSheet(
+    q,
+    q.type === 'objective' ? (answerObj.selectedOption || selectedAnswer) : selectedAnswer,
+    timeTaken
+  );
   // --- End mapping ---
 
   currentIndex++;
@@ -533,6 +541,7 @@ function resetAssessment() {
   currentIndex = 0;
   startTime = null;
   userInfo = { createdAt: new Date().toISOString(), data: {}, responses: [] };
+  assessmentSessionId = crypto.randomUUID();
   // Reset form fields
   if (form) form.reset();
   // Show the user details form
@@ -564,4 +573,49 @@ function resetAssessment() {
       });
     }
   }, 100);
+}
+
+/**
+ * Sends a single question response to the backend for Google Sheets logging.
+ * Fire-and-forget: errors are logged to console but never block the UI.
+ */
+function saveResponseToSheet(questionData, answerValue, timeTakenSec) {
+  try {
+    const q = questionData;
+    const demographics = userInfo.data || {};
+    const questionTextEn = typeof q.question === 'object' ? (q.question.en || '') : (q.question || '');
+
+    const payload = {
+      sessionId: assessmentSessionId,
+      section: q.section,
+      questionType: q.type === 'objective' ? 'Objective' : 'Subjective',
+      questionId: q.type === 'subjective' ? (q.questionId || `Q${currentIndex + 1}`) : String(q.questionIndex ?? currentIndex),
+      questionTextEn: questionTextEn,
+      criteria: Array.isArray(q.criteria) ? q.criteria.join(', ') : (q.criteria || ''),
+      userAnswer: answerValue,
+      selectedOptionText: '',
+      timeTakenSec: timeTakenSec,
+      language: selectedLanguage,
+      questionWeight: q.weight || 0,
+      userAgeSlab: demographics.ageSlab || '',
+      userGender: demographics.gender || '',
+    };
+
+    if (q.type === 'objective' && q.options) {
+      const matchedOpt = q.options.find(opt => opt.key === answerValue);
+      if (matchedOpt) {
+        payload.selectedOptionText = typeof matchedOpt.text === 'object' ? (matchedOpt.text.en || '') : (matchedOpt.text || '');
+      }
+    }
+
+    fetch(`${BASE_API_URL}/api/mentalhealth/response`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    }).catch(err => {
+      console.warn('Failed to save response to sheet (non-blocking):', err.message);
+    });
+  } catch (err) {
+    console.warn('Error preparing sheet save payload (non-blocking):', err.message);
+  }
 }

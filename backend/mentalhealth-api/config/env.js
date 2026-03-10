@@ -19,7 +19,10 @@ const envSchema = z.object({
   DB_EXIT_ON_FAIL: z.enum(['true','false']).optional().default('true'),
   EMAIL_USER: z.string().optional(),
   EMAIL_PASS: z.string().optional(),
-  JWT_SECRET: z.string().optional()
+  JWT_SECRET: z.string().optional(),
+  GOOGLE_SHEETS_ID: z.string().optional(),
+  GOOGLE_SERVICE_ACCOUNT_EMAIL: z.string().optional(),
+  GOOGLE_PRIVATE_KEY: z.string().optional()
 });
 
 const parsed = envSchema.safeParse(process.env);
