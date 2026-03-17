@@ -14,7 +14,6 @@ const Resources = ({ resourcesData }) => {
                         <div
                             key={idx}
                             className="resource-item"
-                            style={{ cursor: "pointer" }}
                             onClick={() => {
                                 if (resource.url.startsWith("tel:")) {
                                     window.location.href = resource.url;
@@ -30,15 +29,7 @@ const Resources = ({ resourcesData }) => {
                             <div className="resource-content">
                                 <div className="resource-title">
                                     {idx === 0 && (
-                                        <img
-                                            src="/src/assets/logo.png"
-                                            alt="Hosla"
-                                            style={{
-                                                height: "30px",
-                                                verticalAlign: "middle",
-                                                marginRight: "4px",
-                                            }}
-                                        />
+                                        <img src="/src/assets/logo.png" alt="Hosla" id="desImage"/>
                                     )}
                                     {resource.title}
                                 </div>
@@ -48,7 +39,7 @@ const Resources = ({ resourcesData }) => {
                                 </div>
                             </div>
 
-                            <i className="fas fa-chevron-right" style={{ color: "#64748b" }}></i>
+                            <i className="fas fa-chevron-right"></i>
                         </div>
                     ))}
                 </div>

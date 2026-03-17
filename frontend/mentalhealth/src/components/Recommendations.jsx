@@ -12,7 +12,7 @@ const Recommendations = ({ recommendationsData }) => {
                 <div className="recommendations-grid">
 
                     {(!recommendationsData || Object.keys(recommendationsData).length === 0) && (
-                        <div style={{ color: "#64748b", fontWeight: 500 }}>
+                        <div id="pers-recommend">
                             No personalized recommendations available.
                         </div>
                     )}
@@ -47,13 +47,7 @@ const Recommendations = ({ recommendationsData }) => {
                                 </div>
 
                                 {data.why && data.why.length > 0 && (
-                                    <div
-                                        style={{
-                                            fontSize: "12px",
-                                            color: "#64748b",
-                                            marginTop: "6px"
-                                        }}
-                                    >
+                                    <div id="why">
                                         Why: {data.why.join(", ")}
                                     </div>
                                 )}

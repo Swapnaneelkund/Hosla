@@ -15,11 +15,23 @@ const ScoreOverview = ({
     const labels = ["Overall Score", "Subjective Score", "Objective Score"];
     return (
         <div className="score-overview">
-            <div className="score-circle">
-                <canvas ref={scoreChartRef}></canvas>
+
+            <div
+                className="score-circle relative mx-auto flex-none"
+                style={{ width: "212px", height: "212px" }}
+            >
+                <canvas
+                    ref={scoreChartRef}
+                    className="w-full h-full block"
+                ></canvas>
+
                 <div className="score-display">
-                    <div className="score-number" id="scoreNumber" style={{ color: scoreColor }}>{scoreNumber}</div>
-                    <div className="score-label" style={{ color: scoreColor }}>{scoreLabel}</div>
+                    <div className="text-center font-bold text-lg" style={{ color: scoreColor }}>
+                        {scoreNumber}
+                    </div>
+                    <div className="text-center text-sm font-medium" style={{ color: scoreColor }}>
+                        {scoreLabel}
+                    </div>
                 </div>
             </div>
 
@@ -29,19 +41,11 @@ const ScoreOverview = ({
                     <div
                         key={index}
                         onClick={() => { updateLegendActiveState(index); updateScoreDisplay(index); }}
+                        className={`transition-transform duration-200 ease-in-out cursor-pointer p-2 rounded border`}
                         style={{
-                            background:
-                                index === activeScoreIndex
-                                    ? "rgba(102, 126, 234, 0.1)"
-                                    : "rgba(255, 255, 255, 0.9)",
-                            borderColor:
-                                index === activeScoreIndex
-                                    ? "rgba(102, 126, 234, 0.3)"
-                                    : "rgba(0, 0, 0, 0.08)",
-                            transform:
-                                index === activeScoreIndex
-                                    ? "translateY(-2px) scale(1.05)"
-                                    : "translateY(0) scale(1)"
+                            background: index === activeScoreIndex ? "rgba(102, 126, 234, 0.1)" : "rgba(255, 255, 255, 0.9)",
+                            borderColor: index === activeScoreIndex ? "rgba(102, 126, 234, 0.3)" : "rgba(0, 0, 0, 0.08)",
+                            transform: index === activeScoreIndex ? "translateY(-2px) scale(1.05)" : "translateY(0) scale(1)"
                         }}
                     >
                         {label}

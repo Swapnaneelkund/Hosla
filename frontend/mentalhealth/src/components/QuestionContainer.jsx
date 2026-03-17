@@ -9,7 +9,7 @@ const QuestionContainer = ({minlen,questions,currentIndex,currentQuestion,progre
       {/* Progress bar */}
       <ProgressBar progressPercentage={progressPercentage} />
 
-      <div id="progressText" style={{ textAlign: "center", marginBottom: "20px", fontWeight: "600", color: "#667eea" }}>
+      <div id="progressText">
         {questions.length > 0 && translate("progress", currentIndex + 1, questions.length)}
       </div>
 

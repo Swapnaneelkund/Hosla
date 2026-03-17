@@ -18,11 +18,11 @@ const EmailModal = ({
                 <span id="closeModalSpanBtn" className="close" onClick={closeModal}>
                     &times;
                 </span>
-                <h3 style={{ marginBottom: "20px", color: "#374151" }}>
+                <h3 className="email-title">
                     Email Your Results
                 </h3>
-                <div style={{ marginBottom: "20px" }}>
-                    <label htmlFor="emailAddress" style={{ display: "block", marginBottom: "8px", fontWeight: 600, color: "#374151" }}>
+                <div className="form-group">
+                    <label className="emailLabel" htmlFor="emailAddress">
                         Email Address:
                     </label>
                     <input
@@ -31,24 +31,12 @@ const EmailModal = ({
                         onChange={(e) => setEmailAddress(e.target.value)}
                         id="emailAddress"
                         placeholder="Enter email address"
-                        style={{
-                            width: "100%",
-                            padding: "12px",
-                            border: "2px solid #e2e8f0",
-                            borderRadius: "8px",
-                            fontSize: "16px"
-                        }}
                     />
                 </div>
-                <div style={{ marginBottom: "20px" }}>
+                <div className="emailGroup">
                     <label
                         htmlFor="emailMessage"
-                        style={{
-                            display: "block",
-                            marginBottom: "8px",
-                            fontWeight: 600,
-                            color: "#374151"
-                        }}
+                        className="emailLabel"
                     >
                         Optional Message:
                     </label>
@@ -58,44 +46,18 @@ const EmailModal = ({
                         value={emailMessage}
                         onChange={(e) => setEmailMessage(e.target.value)}
                         placeholder="Add a personal message..."
-                        style={{
-                            width: "100%",
-                            padding: "12px",
-                            border: "2px solid #e2e8f0",
-                            borderRadius: "8px",
-                            fontSize: "16px",
-                            resize: "vertical"
-                        }}
                     ></textarea>
                 </div>
-                <div style={{ display: "flex", gap: "12px", justifyContent: "flex-end" }}>
+                <div className="emailButtons">
                     <button
                         id="cancelEmailBtn"
                         onClick={closeModal}
-                        style={{
-                            padding: "12px 24px",
-                            background: "#e2e8f0",
-                            border: "none",
-                            borderRadius: "8px",
-                            cursor: "pointer",
-                            fontWeight: 600,
-                            color: "#374151"
-                        }}
                     >
                         Cancel
                     </button>
                     <button
                         id="sendEmailBtn"
                         onClick={sendEmail}
-                        style={{
-                            padding: "12px 24px",
-                            background: "linear-gradient(135deg, #667eea, #764ba2)",
-                            color: "white",
-                            border: "none",
-                            borderRadius: "8px",
-                            cursor: "pointer",
-                            fontWeight: 600
-                        }}
                     >
                         Send Email
                     </button>

@@ -20,7 +20,7 @@ const SectionBreakdown = ({
                 <div className="section-grid">
 
                     {(!sections || Object.keys(sections).length === 0) && (
-                        <div style={{ color: "#b91c1c", fontWeight: 600 }}>
+                        <div id="section-data">
                             No section data available.
                         </div>
                     )}
@@ -40,30 +40,20 @@ const SectionBreakdown = ({
                                         {Math.round(data.percentage)}%
                                     </span>
 
-                                    <span style={{ color: "#64748b", fontSize: "14px" }}>
+                                    <span id="data-score">
                                         {data.score}/{data.maxScore}
                                     </span>
                                 </div>
 
                                 <div className="section-bar">
                                     <div
-                                        className="section-fill"
-                                        style={{ width: animateBars ? `${data.percentage}%` : "0%" }}
+                                    className="bg-blue-500 h-2 rounded transition-all duration-500"
+                                    style={{ width: animateBars ? `${data.percentage}%` : "0%" }}
                                     ></div>
                                 </div>
 
                                 <button
                                     className="section-details-toggle"
-                                    style={{
-                                        marginTop: "8px",
-                                        background: "#eef2ff",
-                                        color: "#4338ca",
-                                        border: "none",
-                                        padding: "8px 12px",
-                                        borderRadius: "8px",
-                                        fontWeight: 600,
-                                        cursor: "pointer"
-                                    }}
                                     onClick={() =>
                                         setOpenSection(isOpen ? null : detailsId)
                                     }
@@ -72,14 +62,7 @@ const SectionBreakdown = ({
                                 </button>
 
                                 {isOpen && (
-                                    <div
-                                        className="section-details"
-                                        style={{
-                                            marginTop: "10px",
-                                            borderTop: "1px dashed #e5e7eb",
-                                            paddingTop: "10px"
-                                        }}
-                                    >
+                                    <div className="section-details">
                                         {renderSectionDetails(data)}
                                     </div>
                                 )}

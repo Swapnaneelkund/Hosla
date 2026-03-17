@@ -2,10 +2,9 @@ const Header = ({ logo, translate }) => {
   return (
     <div className="header">
       <div className="logo">
-        <img
+        <img id="mainImage"
           src={logo}
           alt="Hosla Logo"
-          style={{ height: "60px", width: "auto" }}
         />
       </div>
 

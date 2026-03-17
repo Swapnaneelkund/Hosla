@@ -42,11 +42,7 @@ const ResultsHeader = ({ participantName, timestamp, timeTaken, evaluationSummar
                 <p className="results-timestamp" id="timestamp">{timestamp}</p>
                 <p className="results-timestamp" id="timeTaken">{timeTaken}</p>
 
-                <p
-                    className="results-timestamp"
-                    id="evaluationSummary"
-                    style={{ display: "none", color: "#64748b", fontWeight: 600 }}
-                >{evaluationSummary}</p>
+                <p className="results-timestamp" id="evaluationSummary" >{evaluationSummary}</p>
 
             </div>
 

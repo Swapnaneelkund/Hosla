@@ -1,0 +1,5 @@
+@import "tailwindcss";
+
+/* import custom css */
+@import "./mentalhealth.css";
+@import "./mentalHealthResult.css";

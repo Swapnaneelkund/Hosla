@@ -908,49 +908,6 @@ const MentalHealthResult = () => {
     doc.save(fileName);
   };
 
-  // const downloadPDFWithCharts = async () => {
-  //   if (!resultsData) return;
-
-  //   const doc = new jsPDF();
-
-  //   // Create the basic report
-  //   doc.setFontSize(24);
-  //   doc.text("Mental Health Assessment Results", 20, 20);
-
-  //   doc.setFontSize(12);
-  //   doc.text(`Score: ${resultsData.assessment.percentage}%`, 20, 40);
-
-  //   // Capture the chart canvas
-  //   if (scoreChartRef.current) {
-  //     const canvas = scoreChartRef.current;
-
-  //     const imgData = canvas.toDataURL("image/png");
-
-  //     // Add chart image to PDF
-  //     doc.addImage(imgData, "PNG", 20, 60, 160, 100);
-  //   }
-
-  //   // If you also want the detailed chart
-  //   if (detailedChartRef.current) {
-  //     const canvas = detailedChartRef.current;
-  //     const imgData = canvas.toDataURL("image/png");
-
-  //     doc.addPage();
-  //     doc.text("Detailed Section Analysis", 20, 20);
-
-  //     doc.addImage(imgData, "PNG", 20, 40, 160, 100);
-  //   }
-
-  //   const participantName =
-  //     resultsData.userName ||
-  //     (resultsData.data && resultsData.data.name) ||
-  //     "Assessment";
-
-  //   const fileName = `${participantName.replace(/\s+/g, "_")}_Assessment.pdf`;
-
-  //   doc.save(fileName);
-  // };
-
   const emailResults = () => {
     setShowEmailModal(true);
   };
