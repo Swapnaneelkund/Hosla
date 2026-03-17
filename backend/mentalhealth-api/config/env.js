@@ -25,6 +25,8 @@ const envSchema = z.object({
   GOOGLE_PRIVATE_KEY: z.string().optional()
 });
 
+CORS_ORIGIN="http://localhost:5173,http://127.0.0.1:5500"
+
 const parsed = envSchema.safeParse(process.env);
 if (!parsed.success) {
   logger.error('Environment validation failed');

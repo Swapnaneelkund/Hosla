@@ -2,7 +2,11 @@
   "name": "mentalhealth",
   "version": "1.0.0",
   "main": "index.js",
+  "type": "module",
   "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
     "test": "echo \"Error: no test specified\" && exit 1",
     "build:css": "node node_modules/@tailwindcss/cli/dist/index.mjs -i ./src/css/input.css -o ./src/css/output.css --minify",
     "build:js": "node node_modules/terser/bin/terser src/js/mentalHealth.js -o dist/mentalHealth.min.js && node node_modules/terser/bin/terser src/js/mentalHealthResult.js -o dist/mentalHealthResult.min.js"
@@ -14,7 +18,17 @@
   "dependencies": {
     "@parcel/watcher": "^2.5.1",
     "@tailwindcss/cli": "^4.1.7",
+    "chart.js": "^4.5.1",
+    "cors": "^2.8.6",
+    "html2canvas": "^1.4.1",
+    "jspdf": "^4.2.0",
+    "react-icons": "^5.6.0",
+    "react-router-dom": "^7.13.1",
     "tailwindcss": "^4.1.7",
     "terser": "^5.31.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^5.1.4",
+    "vite": "^7.3.1"
   }
 }

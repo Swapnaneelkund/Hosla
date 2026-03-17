@@ -4,6 +4,12 @@
   box-sizing: border-box;
 }
 
+html, body, #root {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+
 body {
   font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
@@ -38,6 +44,10 @@ body::before {
     );
   pointer-events: none;
   z-index: 0;
+}
+
+.mental-health-page {
+  min-height: 100vh;
 }
 
 .floating-shapes {
@@ -94,6 +104,8 @@ body::before {
   padding: 20px;
   max-width: 1200px;
   margin: 0 auto;
+  display: flex;
+  flex-direction: column;
 }
 
 .results-card {
@@ -106,6 +118,8 @@ body::before {
   margin-bottom: 20px;
   position: relative;
   overflow: hidden;
+
+  width: 100%;        /* ⭐ ADD THIS */
 }
 
 @media (max-width: 768px) {
@@ -1116,13 +1130,6 @@ body::before {
 /* Show modal when active */
 .modal.show {
   display: block;
-}
-
-.score-overview {
-  display: flex;
-  align-items: center;
-  gap: 30px;
-  margin-bottom: 40px;
 }
 
 .score-details {
